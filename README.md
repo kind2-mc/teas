@@ -1,6 +1,6 @@
 # testeas
 
-Test Execution and Analysis Software
+Test Execution and Analysis System
 
 # License
 
