@@ -10,6 +10,6 @@ setup(
     author='Adrien Champion',
     author_email='adrien.champion@email.com',
     url='https://github.com/kind2-mc/testeas',
-    package_dir={'': 'src'},
-    packages=[''],
+    package_dir={'testeas': 'src'},
+    packages=['testeas'],
 )
