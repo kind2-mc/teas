@@ -1,4 +1,5 @@
-""" Basic io operations. """
+""" Basic io operations. See conf_log_ for the semantics of the
+log level. """
 
 from conf import log_lvl
 
@@ -19,7 +20,7 @@ def log_lines(lines, lvl=2):
 
 # Prefixed single line printing.
 
-def error(line):
+def _error(line):
     """ Prints some line prefixed by `[ error ] `. """
     print( "[ error ] {}".format(line) )
 
@@ -30,6 +31,10 @@ def _warning(line):
 def _info(line):
     """ Prints some line prefixed by `[ info  ] `. """
     print( "[ info  ] {}".format(line) )
+
+def error(line):
+    """ Prints some line prefixed by `[ error ] `. """
+    if log_lvl() >= 1: _error(line)
 
 def warning(line):
     """ Prints some line prefixed by `[warning] `. """
@@ -44,7 +49,8 @@ def info(line, lvl=2):
 
 def error_lines(lines) :
     """ Prints some lines prefixed by `[ error ] `. """
-    for line in lines : error(line)
+    if log_lvl() >= 1:
+        for line in lines : error(line)
 
 def warning_lines(lines) :
     """ Prints some lines prefixed by `[warning] `. """

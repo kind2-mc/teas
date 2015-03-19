@@ -17,6 +17,7 @@ _options = []
 
 def _print_help():
     """ Prints the options. """
+    print("")
     print("Options:")
     for triplet in _options:
         if len(triplet[0]) < 1:
@@ -63,25 +64,27 @@ def parse_arguments():
                 # Unknown option, error.
                 _print_help()
                 error( "Unexpected option \"{}\".".format(option) )
-                new_line()
+                error("")
                 sys.exit(1)
             else:
                 # Looping with updated tail of arguments.
                 handle_options( triplet[2](args[1:]) )
 
     args = handle_options(args)
+    max_log_lvl = conf.max_log_lvl()
 
-    info("Flags left: {}.".format(args))
+    info("Flags left: {}.".format(args), max_log_lvl)
 
-    new_line()
-    conf.print_conf()
-
-
+    new_line(max_log_lvl)
 
 
 
 
 
+
+
+
+# Building the list of options.
 
 
 def _add_option(reps, desc, l4mbda):
@@ -115,7 +118,7 @@ def _v_action(tail):
 _add_option(
     ["-v"],
     ["verbose output"],
-    lambda tail: _v_action(tail)
+    _v_action
 )
 
 # Quiet 1 option.
@@ -124,8 +127,8 @@ def _q1_action(tail):
     return tail
 _add_option(
     ["-q"],
-    ["disables most info"],
-    lambda tail: _q1_action(tail)
+    ["no output except errors and warnings"],
+    _q1_action
 )
 
 # Quiet 2 option.
@@ -134,6 +137,6 @@ def _q2_action(tail):
     return tail
 _add_option(
     ["-qq"],
-    ["disables all info except errors and warnings"],
-    lambda tail: _q2_action(tail)
+    ["no output at all"],
+    _q2_action
 )
