@@ -7,7 +7,7 @@ from stdout import (
 )
 import conf
 import flags
-import input_seq
+import test_case
 
 # Parse command line arguments.
 flags.parse_arguments()
@@ -20,11 +20,11 @@ new_line()
 
 log("Attempting to read \"{}\".".format(test_csv_file))
 
-test_case = input_seq.of_csv_file(test_csv_file)
+csv_test_case = test_case.of_csv_file(test_csv_file)
 
 log("Success:")
 
-input_seq.print_test_case(test_case, 2)
+test_case.print_test_case(csv_test_case, 2)
 
 
 new_line()
