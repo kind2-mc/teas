@@ -3,13 +3,13 @@
 from distutils.core import setup
 import os
 import shutil
-from src.io import warning, info
+from src.stdout import info, warning, error, new_line
 
 readme_md = "README.md"
 readme_target = "README"
 should_rm_readme_target = False
 
-print("")
+new_line()
 
 # Copy `readme_md` to `readme_target` if the former exists but the
 # former does not.
@@ -31,7 +31,7 @@ if os.path.isfile(readme_md) :
 
 else : warning( "readme file \"" + readme_md + "\" not found." )
 
-print("")
+new_line()
 
 # Setup things.
 try: setup(
@@ -47,11 +47,11 @@ try: setup(
 )
 
 finally :
-    print("")
+    new_line()
 
     # Whatever happens during setup, remove target readme if necessary.
     if should_rm_readme_target:
         info("deleting distutils readme file \"" + readme_target + "\".")
         os.remove( readme_target )
 
-    print("")
+    new_line()

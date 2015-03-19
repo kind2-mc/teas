@@ -1,18 +1,22 @@
 """ Basic io operations. """
 
+def new_line():
+    """ Prints a new line. """
+    print( "" )
+
 # Single line printing.
 
 def error(txt):
     """ Prints some text prefixed by `[ error ] `. """
-    print( "[ error ] " + txt )
+    print( "[ error ] {}".format(txt) )
 
 def warning(txt):
     """ Prints some text prefixed by `[warning] `. """
-    print( "[warning] " + txt )
+    print( "[warning] {}".format(txt) )
 
 def info(txt):
     """ Prints some text prefixed by `[ info  ] `. """
-    print( "[ info  ] " + txt )
+    print( "[ info  ] {}".format(txt) )
 
 
 # Multi line printing.
