@@ -30,7 +30,7 @@ def print_test_case(seqs, lvl):
         log("|-------|", lvl)
 
 def _check_input_seq_integrity(
-    seq, length, line, file_name, format
+    seq, length, line, file_name, form4t
 ):
     """ Checks the integrity of an input sequence.
     The length of the sequence should be the same as the input
@@ -38,17 +38,17 @@ def _check_input_seq_integrity(
     seq_length = len(seq)
     if (length is None) and (seq_length < 3):
         raise InputSeqExc(
-            "Illegal input sequence has less than 3 \
-            columns",
+            ("Illegal input sequence has less than 3 "
+            "columns"),
             file_name,
             line,
             form4t
         )
     elif (not (length is None)) and (seq_length != length):
         raise InputSeqExc(
-            "Inconsistent test case, first input sequence(s) \
-            are {} inputs long but found a sequence of length \
-            {}".format(length, seq_length - 2),
+            ("Inconsistent test case, first input sequence(s) "
+            "are {} inputs long but found a sequence of length "
+            "{}").format(length, seq_length - 2),
             file_name,
             line,
             form4t
@@ -66,15 +66,15 @@ def _input_seq_of_csv_row(row, length, line, file_name):
 
     # Legal rows must have at least 3 elements.
     if len(row) < 3: raise InputSeqExc(
-        "Expecting an identifier, a type, and a sequence of values \
-        but found {}".format(row),
+        ("Expecting an identifier, a type, and a sequence of values "
+        "but found {}").format(row),
         file_name,
         line,
         "csv"
     )
 
     # Checking integrity if ``length`` is defined.
-    elif not (length is None): _check_input_seq_integrity(
+    elif length is not None: _check_input_seq_integrity(
         row[2:], length, line, file_name, "csv"
     )
 
@@ -84,7 +84,7 @@ def _input_seq_of_csv_row(row, length, line, file_name):
     vals = row[2:]
 
     # Checking that ``typ3`` is a legal type.
-    if not (typ3 in _legal_types): raise InputSeqExc(
+    if typ3 not in _legal_types: raise InputSeqExc(
         "Unsupported type \"{}\" for input \"{}\"".format(
             typ3, ident
         ),
@@ -101,6 +101,8 @@ def of_csv_file(file_name):
     """ Reads a csv file and extracts a test case out of it.
     A test case is a list of input sequence.
     An input sequence is an ident, a type, and a list of values. """
+
+    fil3 = None
 
     try:
         # Open in read only.
@@ -150,5 +152,6 @@ def of_csv_file(file_name):
         return reduced[2]
 
     # Whatever happens we should close the file we opened.
-    finally: fil3.close()
+    finally:
+        if fil3 is not None: fil3.close()
 

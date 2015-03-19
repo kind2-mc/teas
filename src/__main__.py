@@ -14,7 +14,7 @@ flags.parse_arguments()
 
 conf.print_conf(conf.max_log_lvl())
 
-test_csv_file = "resources/test1.csv"
+test_csv_file = "resources/csv/ok_3_lines_6_values.csv"
 
 new_line()
 

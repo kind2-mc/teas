@@ -12,3 +12,4 @@ test:
 clean:
 	rm -rf dist
 	rm -f src/tests/*.pyc src/*.pyc MANIFEST
+
