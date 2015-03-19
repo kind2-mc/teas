@@ -10,5 +10,5 @@ test:
 	nosetests-2.7 -v src/tests/*.py
 
 clean:
-	rm -rf dist src/tests/*.pyc
-	rm MANIFEST
+	rm -rf dist
+	rm -f src/tests/*.pyc src/*.pyc MANIFEST
