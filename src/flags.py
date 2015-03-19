@@ -1,36 +1,38 @@
 """ Flag handling. """
 
 import sys
+
 from stdout import info, warning, error, new_line
+import conf
 
 # List of options. An option is a triplet of:
 # * a list of string representations of the option,
 # * a description of the option for help printing,
-# * an action taking the tail of arguments and returning
-#   its new state.
+# * an action taking the tail of arguments and returning its new
+#   state.
+#
+# Additionally, an option with an empty list of representations
+# is understood as an option section header.
 _options = []
 
 def _print_help():
     """ Prints the options. """
-    new_line()
     print("Options:")
     for triplet in _options:
-        print( "  {}\n    {}".format(
-            triplet[0], triplet[1]
-        ) )
+        if len(triplet[0]) < 1:
+            new_line()
+            for header_line in triplet[1]:
+                print("|===| {}".format(header_line))
+        else:
+            print("> {}".format(triplet[0]))
+            for desc_line in triplet[1]:
+                print("  {}".format(desc_line))
     new_line()
 
 def _print_help_exit(code):
     """ Prints the options and exits. """
     _print_help()
     sys.exit(code)
-
-# Help option.
-_options.append(
-    ( ["-h", "--help"],
-      "prints the help message and exits",
-      lambda tail: _print_help_exit(0) )
-)
 
 def _find_option_triplet(option):
     """ Finds the option triplet corresponding to an argument. """
@@ -70,3 +72,68 @@ def parse_arguments():
     args = handle_options(args)
 
     info("Flags left: {}.".format(args))
+
+    new_line()
+    conf.print_conf()
+
+
+
+
+
+
+
+
+
+def _add_option(reps, desc, l4mbda):
+    """ Adds an option to the option list. """
+    _options.append((reps, desc, l4mbda))
+
+def _add_option_header(lines):
+    """ Adds an option header to the option list. """
+    _options.append((
+        [],
+        lines,
+        "" # lambda tail: assert false
+    ))
+
+# Help option.
+_add_option(
+    ["-h", "--help"],
+    ["prints the help message and exits"],
+    lambda tail: _print_help_exit(0)
+)
+
+# Verbose option section header.
+_add_option_header((
+    ["Verbosity options."]
+))
+
+# Verbose option.
+def _v_action(tail):
+    conf.set_log_lvl(3)
+    return tail
+_add_option(
+    ["-v"],
+    ["verbose output"],
+    lambda tail: _v_action(tail)
+)
+
+# Quiet 1 option.
+def _q1_action(tail):
+    conf.set_log_lvl(1)
+    return tail
+_add_option(
+    ["-q"],
+    ["disables most info"],
+    lambda tail: _q1_action(tail)
+)
+
+# Quiet 2 option.
+def _q2_action(tail):
+    conf.set_log_lvl(0)
+    return tail
+_add_option(
+    ["-qq"],
+    ["disables all info except errors and warnings"],
+    lambda tail: _q2_action(tail)
+)

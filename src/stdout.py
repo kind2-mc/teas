@@ -1,25 +1,46 @@
 """ Basic io operations. """
 
-def new_line():
+from conf import log_lvl
+
+def new_line(lvl=2):
     """ Prints a new line. """
-    print( "" )
+    log( "", lvl )
 
-# Single line printing.
+def log(line, lvl=2):
+    """ Prints a line if `lvl` is greater than the log level. """
+    if log_lvl() >= lvl:
+        print("{}".format(line))
 
-def error(txt):
-    """ Prints some text prefixed by `[ error ] `. """
-    print( "[ error ] {}".format(txt) )
+def log_lines(lines, lvl=2):
+    """ Prints some lines if `lvl` is greater than the log level. """
+    if log_lvl() >= lvl:
+        for line in lines:
+            print("{}".format(line))
 
-def warning(txt):
-    """ Prints some text prefixed by `[warning] `. """
-    print( "[warning] {}".format(txt) )
+# Prefixed single line printing.
 
-def info(txt):
-    """ Prints some text prefixed by `[ info  ] `. """
-    print( "[ info  ] {}".format(txt) )
+def error(line):
+    """ Prints some line prefixed by `[ error ] `. """
+    print( "[ error ] {}".format(line) )
+
+def _warning(line):
+    """ Prints some line prefixed by `[warning] `. """
+    print( "[warning] {}".format(line) )
+
+def _info(line):
+    """ Prints some line prefixed by `[ info  ] `. """
+    print( "[ info  ] {}".format(line) )
+
+def warning(line):
+    """ Prints some line prefixed by `[warning] `. """
+    if log_lvl() >= 1: _warning(line)
+
+def info(line, lvl=2):
+    """ Prints some line prefixed by `[ info  ] `. """
+    if log_lvl() >= lvl: _info(line)
 
 
-# Multi line printing.
+# Prefixed multi line printing.
 
 def error_lines(lines) :
     """ Prints some lines prefixed by `[ error ] `. """
@@ -27,9 +48,11 @@ def error_lines(lines) :
 
 def warning_lines(lines) :
     """ Prints some lines prefixed by `[warning] `. """
-    for line in lines : warning(line)
+    if log_lvl() >= 1:
+        for line in lines: _warning(line)
 
 
-def info_lines(lines) :
+def info_lines(lines, lvl=2) :
     """ Prints some lines prefixed by `[ info  ] `. """
-    for line in lines : info(line)
+    if log_lvl() >= lvl:
+        for line in lines: _info(line)
