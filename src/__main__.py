@@ -5,14 +5,14 @@ from stdout import (
     error, warning, info,
     error_lines, warning_lines, info_lines
 )
-import conf
+import options
 import flags
 import test_case
 
 # Parse command line arguments.
-flags.parse_arguments()
+options.parse_arguments()
 
-conf.print_conf(conf.max_log_lvl())
+flags.print_flags(flags.max_log_lvl())
 
 test_csv_file = "resources/csv/ok_3_lines_6_values.csv"
 

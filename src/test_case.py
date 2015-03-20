@@ -7,7 +7,7 @@ import sys, csv
 
 from stdout import error, log, new_line
 from excs import InputSeqExc
-import conf
+import flags
 
 # Legal types.
 _legal_types = [
@@ -46,6 +46,7 @@ def type_check(seqs):
     seq_index = 0
     for seq in seqs:
         seq_index += 1
+        log("> type-checking \"{}\" ({})".format(seq[0], seq[1]),3)
         typ3 = seq[1]
         checker = _type_check_fun_map[typ3]
         val_index = 0
@@ -194,13 +195,13 @@ def of_csv_file(file_name):
             (0, None, [])
         )
 
-        if conf.type_check_test_cases():
+        if flags.type_check_test_cases():
             log("Type checking test case from \"{}\" (csv)...".format(
                 file_name
-            ))
+            ), 3)
             type_check(reduced[2])
-            log("> success.")
-            new_line()
+            log("> success.", 3)
+            new_line(3)
 
 
         # Returning final list of input sequences.

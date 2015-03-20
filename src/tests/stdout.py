@@ -1,6 +1,6 @@
 """ Tests log related things. """
 
-from src.conf import set_log_lvl
+from src.flags import set_log_lvl
 from src.stdout import (
     new_line, log, log_lines,
     error, warning, info,

@@ -1,7 +1,7 @@
 """ Basic io operations. See conf_log_ for the semantics of the
 log level. """
 
-from conf import log_lvl
+from flags import log_lvl
 
 def new_line(lvl=2):
     """ Prints a new line. """
