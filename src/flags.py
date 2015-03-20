@@ -64,11 +64,19 @@ def parse_arguments():
                 # Unknown option, error.
                 _print_help()
                 error( "Unexpected option \"{}\".".format(option) )
-                error("")
+                new_line(1)
                 sys.exit(1)
             else:
+                try: nu_args = triplet[2](args[1:])
+                except ValueError as e:
+                    # Option handler crashed, error.
+                    _print_help()
+                    error( "Error on option \"{}\":".format(option) )
+                    error( "  {}".format(e) )
+                    new_line(1)
+                    sys.exit(1)
                 # Looping with updated tail of arguments.
-                handle_options( triplet[2](args[1:]) )
+                else: handle_options(nu_args)
 
     args = handle_options(args)
     max_log_lvl = conf.max_log_lvl()
@@ -139,4 +147,31 @@ _add_option(
     ["-qq"],
     ["no output at all"],
     _q2_action
+)
+
+# Test case construction section header.
+_add_option_header((
+    ["Test case construction options."]
+))
+
+# Test case type-check option.
+def _type_check_action(tail):
+    if tail[0] in [ "true", "True" ]:
+        conf.set_type_check_test_cases(True)
+    elif tail[0] in [ "false", "False" ]:
+        conf.set_type_check_test_cases(False)
+    else: raise ValueError(
+        "expected bool value but found \"{}\"".format(tail[0])
+    )
+    return tail[1:]
+_add_option(
+    ["--type_check"],
+    [
+        "> bool (default {})".format(
+            conf.type_check_test_cases_default()
+        ),
+        "if true, test cases will be type checked (may be expensive",
+        "for large test cases)"
+    ],
+    _type_check_action
 )

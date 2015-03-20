@@ -4,13 +4,59 @@ An input sequence is an ident, a type, and a list of values.
 """
 
 import sys, csv
+
 from stdout import error, log, new_line
 from excs import InputSeqExc
+import conf
 
 # Legal types.
 _legal_types = [
-    "int", "bool", "real"
+    "bool", "int", "float"
 ]
+
+def _is_bool(string):
+    """ Returns ``True`` iff ``string`` is the string ``\"true\"``
+    or ``\"false\"``. """
+    return string in [ "true", "false" ]
+
+def _is_int(string):
+    """ Returns ``True`` iff ``string`` can be parsed as an
+    integer. """
+    try: int(string)
+    except ValueError: return False
+    else: return True
+
+def _is_float(string):
+    """ Returns ``True`` iff ``string`` can be parsed as a float,
+    and has a ``'.'``. """
+    try: float(string)
+    except ValueError: return False
+    else: return ("." in string)
+
+
+# Maps a legal type to its type check function.
+_type_check_fun_map = {
+    "bool": _is_bool,
+    "int": _is_int,
+    "float": _is_float
+}
+
+def type_check(seqs):
+    """ Type checks a test case. """
+    seq_index = 0
+    for seq in seqs:
+        seq_index += 1
+        typ3 = seq[1]
+        checker = _type_check_fun_map[typ3]
+        val_index = 0
+        for val in seq[2]:
+            val_index += 1
+            if not checker(val): raise TypeError(
+                ("expected value of type {} but found \"{}\" "
+                "(seq {}, value {})").format(
+                    typ3, val, seq_index, val_index
+                )
+            )
 
 def legal_types():
     """ Returns the legal types for inputs. """
@@ -30,7 +76,7 @@ def print_test_case(seqs, lvl):
         log("|-------|", lvl)
 
 def _check_input_seq_integrity(
-    seq, length, line, file_name, form4t
+    seq, length, seq_index, file_name, form4t
 ):
     """ Checks the integrity of an input sequence.
     The length of the sequence should be the same as the input
@@ -41,7 +87,7 @@ def _check_input_seq_integrity(
             ("Illegal input sequence has less than 3 "
             "columns"),
             file_name,
-            line,
+            seq_index,
             form4t
         )
     elif (not (length is None)) and (seq_length != length):
@@ -50,13 +96,13 @@ def _check_input_seq_integrity(
             "are {} inputs long but found a sequence of length "
             "{}").format(length, seq_length - 2),
             file_name,
-            line,
+            seq_index,
             form4t
         )
 
 
 
-def _input_seq_of_csv_row(row, length, line, file_name):
+def _input_seq_of_csv_row(row, length, seq_index, file_name):
     """ Converts a row from a csv file to an input sequence.
     The row should be an ident, a type, and a sequence of values.
     Checks the integrity of the input sequence, i.e. fails if
@@ -69,13 +115,13 @@ def _input_seq_of_csv_row(row, length, line, file_name):
         ("Expecting an identifier, a type, and a sequence of values "
         "but found {}").format(row),
         file_name,
-        line,
+        seq_index,
         "csv"
     )
 
     # Checking integrity if ``length`` is defined.
     elif length is not None: _check_input_seq_integrity(
-        row[2:], length, line, file_name, "csv"
+        row[2:], length, seq_index, file_name, "csv"
     )
 
     # Extracting input ident, type, and values of the input sequence.
@@ -89,7 +135,7 @@ def _input_seq_of_csv_row(row, length, line, file_name):
             typ3, ident
         ),
         file_name,
-        line,
+        seq_index,
         "csv"
     )
 
@@ -123,30 +169,39 @@ def of_csv_file(file_name):
             """ Checks well-foundedness and integrity, and formats
             the input sequence. Used to reduce the rows of the csv
             reader.
-            Argument ``info`` is a triplet: previous line index,
+            Argument ``info`` is a triplet: previous seq index,
             length of the value sequences seen so far, and list
             of input sequences constructed so far."""
-            line_count = info[0] + 1
+            seq_index = info[0] + 1
             length = info[1]
             seqs = info[2]
             triplet = _input_seq_of_csv_row(
-                row, length, line_count, file_name
+                row, length, seq_index, file_name
             )
             # Setting length.
             length = len(triplet[2])
             seqs.append(triplet)
             # Returning formatted input sequence.
-            return (line_count, length, seqs)
+            return (seq_index, length, seqs)
 
         # Convert each row to an input sequence.
         reduced = reduce(
             row_to_input_seq,
             reader,
-            # Initially previous line count is 0, length of previous
+            # Initially previous seq index is 0, length of previous
             # value sequences is undefined, and there is no input
             # sequence.
             (0, None, [])
         )
+
+        if conf.type_check_test_cases():
+            log("Type checking test case from \"{}\" (csv)...".format(
+                file_name
+            ))
+            type_check(reduced[2])
+            log("> success.")
+            new_line()
+
 
         # Returning final list of input sequences.
         return reduced[2]

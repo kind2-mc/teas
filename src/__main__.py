@@ -19,6 +19,7 @@ test_csv_file = "resources/csv/ok_3_lines_6_values.csv"
 new_line()
 
 log("Attempting to read \"{}\".".format(test_csv_file))
+new_line()
 
 csv_test_case = test_case.of_csv_file(test_csv_file)
 

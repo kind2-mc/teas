@@ -20,7 +20,8 @@ line arguments. The convention is
 
 # Log things.
 
-_log_lvl = 2
+_log_lvl_default = 2
+_log_lvl = _log_lvl_default
 _max_log_lvl = 3
 
 def set_log_lvl(lvl):
@@ -43,6 +44,25 @@ def max_log_lvl():
 
 
 
+# Test case loading things.
+
+_type_check_test_cases_default = False
+_type_check_test_cases = _type_check_test_cases_default
+
+def type_check_test_cases():
+    """ Returns true if the test cases should be type-checked. """
+    return _type_check_test_cases
+
+def set_type_check_test_cases(value):
+    """ Sets the value of the test-case type check flag. """
+    global _type_check_test_cases
+    _type_check_test_cases = value
+
+def type_check_test_cases_default():
+    """ Returns the default value of the flag indicating if the
+    test cases should be type-checked. """
+    return _type_check_test_cases_default
+
 
 
 def print_conf(lvl):
@@ -54,4 +74,9 @@ def print_conf(lvl):
 
     if _log_lvl >= lvl:
         print("Configuration state:")
-        print_conf_item("log level", log_lvl())
+        print_conf_item(
+            "log level", log_lvl()
+        )
+        print_conf_item(
+            "type-check test cases", type_check_test_cases()
+        )
