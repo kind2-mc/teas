@@ -2,7 +2,7 @@
 
 import sys
 
-from stdout import info, warning, error, new_line
+from stdout import log, warning, error, new_line
 import flags
 
 # List of options. An option is a triplet of:
@@ -18,7 +18,7 @@ _options = []
 def _print_help():
     """ Prints the options. """
     print("")
-    print("Options:")
+    print("Usage: [options] <file>")
     for triplet in _options:
         if len(triplet[0]) < 1:
             new_line()
@@ -54,8 +54,7 @@ def parse_arguments():
         Otherwise, finds the option triplet corresponding to
         the head of the list, applies the action, and loops on the
         resulting list. """
-        if len(args) < 2:
-            # One argument or less left, returning.
+        if len(args) < 2:            # One argument or less left, returning.
             return args
         else:
             option = args[0]
@@ -76,14 +75,12 @@ def parse_arguments():
                     new_line(1)
                     sys.exit(1)
                 # Looping with updated tail of arguments.
-                else: handle_options(nu_args)
+                # Not tail call optimization T_T.
+                else: return handle_options(nu_args)
 
     args = handle_options(args)
-    max_log_lvl = flags.max_log_lvl()
 
-    info("Flags left: {}.".format(args), max_log_lvl)
-
-    new_line(max_log_lvl)
+    return args
 
 
 
@@ -151,7 +148,7 @@ _add_option(
 
 # Test case construction section header.
 _add_option_header((
-    ["Test case construction options."]
+    ["Test context construction options."]
 ))
 
 # Test case type-check option.

@@ -8,25 +8,27 @@ from stdout import (
 import options
 import flags
 import test_case
+import test_context
 
 # Parse command line arguments.
-options.parse_arguments()
+files = options.parse_arguments()
+
+new_line()
+log( "Running on files {}.".format(files) )
+new_line()
 
 flags.print_flags(flags.max_log_lvl())
+new_line(flags.max_log_lvl())
 
-test_csv_file = "resources/csv/ok_3_lines_6_values.csv"
+for fil3 in files:
+    log("Building test context from \"{}\".".format(fil3))
+
+    context = test_context.of_xml(fil3)
+    log("Success:")
+    test_context.print_test_context(context)
+    new_line()
 
 new_line()
-
-log("Attempting to read \"{}\".".format(test_csv_file))
-new_line()
-
-csv_test_case = test_case.of_csv_file(test_csv_file)
-
-log("Success:")
-
-test_case.print_test_case(csv_test_case, 2)
-
-
+log("Done.")
 new_line()
 
