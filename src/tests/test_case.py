@@ -17,7 +17,7 @@ def _get_csv_path(file):
 
 def test_csv_ok_3_lines_6_values():
     """ [CSV] Test case construction (ok, simple). """
-    test_case = tc.of_csv_file(
+    test_case = tc.of_csv(
         _get_csv_path("ok_3_lines_6_values")
     )
 
@@ -33,17 +33,17 @@ def test_csv_ok_3_lines_6_values():
 @raises(tc.InputSeqExc)
 def test_csv_fail_illegal_line():
     """ [CSV] Test case construction (fail, illegal line) """
-    tc.of_csv_file( _get_csv_path("fail_illegal_line") )
+    tc.of_csv( _get_csv_path("fail_illegal_line") )
 
 @raises(tc.InputSeqExc)
 def test_csv_fail_inconsistent_sequences():
     """ [CSV] Test case construction (fail, inconsistent) """
-    tc.of_csv_file( _get_csv_path("fail_inconsistent_sequences") )
+    tc.of_csv( _get_csv_path("fail_inconsistent_sequences") )
 
 @raises(tc.InputSeqExc)
 def test_csv_fail_illegal_type():
     """ [CSV] Test case construction (fail, illegal type) """
-    tc.of_csv_file( _get_csv_path("fail_illegal_type") )
+    tc.of_csv( _get_csv_path("fail_illegal_type") )
 
     
 def _type_check_should_fail(input):

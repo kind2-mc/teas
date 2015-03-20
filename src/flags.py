@@ -63,45 +63,24 @@ def type_check_test_cases_default():
     test cases should be type-checked. """
     return _type_check_test_cases_default
 
-# _test_context_format_default = "xml"
-# _test_context_format_available = ["xml"]
-# _test_context_format = _test_context_format_default
-
-# def test_context_format():
-#     """ Returns the format of the test context. """
-#     return _test_context_format
-
-# def set_test_context_format(value):
-#     """ Sets the value of the test context format. """
-#     global _test_context_format
-#     _test_context_format = value
-
-# def test_context_format_default():
-#     """ Returns the default value of the format for test contexts. """
-#     return _test_context_format_default
-
-# def test_context_format_available():
-#     """ Returns the available formats for test contexts. """
-#     return _test_context_format_available
-
 
 _flags = [
-    ("log level", log_lvl()),
+    ("log level", log_lvl),
     ("Test context flags", None),
-    ("type-check test cases", type_check_test_cases())
+    ("type-check test cases", type_check_test_cases)
 ]
 
 
 def print_flags(lvl):
     """ Prints the current state of the configuration module. """
 
-    def print_conf_item(desc, val):
+    def print_conf_item(desc, val_fun):
         """ Format prints a configuration item. """
-        if val == None:
+        if val_fun == None:
             print( "  {:<29} |".format("") )
             print( "| {:<29} |".format(desc) )
         else:
-            print( "  {:>29} | {}".format(desc, val) )
+            print( "  {:>29} | {}".format(desc, val_fun()) )
 
     if log_lvl() >= lvl:
         print("Configuration state:")

@@ -17,6 +17,7 @@ import os
 
 from stdout import log, new_line, error, info
 from excs import TestCtxtExc
+import flags
 
 def _print_binary(binary, lvl):
     """ Prints a binary from a test context. """
@@ -146,3 +147,19 @@ def of_xml(path):
         testcase_list.append(testcase)
 
     return ( binary_list, oracle_list, testcase_list )
+
+# Maps extensions to test context creation function.
+_extension_map = {
+    ".xml": of_xml
+}
+
+def of_file(path):
+    """ Creates a test context from a file. """
+
+    for extension, function in _extension_map.iteritems():
+        if path.endswith(extension):
+            log(
+                "Detected \"{}\" extension.".format(extension),
+                flags.max_log_lvl()
+            )
+            return function(path)

@@ -9,6 +9,8 @@ from stdout import error, log, new_line
 from excs import InputSeqExc
 import flags
 
+max_log = flags.max_log_lvl()
+
 # Legal types.
 _legal_types = [
     "bool", "int", "float"
@@ -46,7 +48,9 @@ def type_check(seqs):
     seq_index = 0
     for seq in seqs:
         seq_index += 1
-        log("> type-checking \"{}\" ({})".format(seq[0], seq[1]),3)
+        log("> type-checking value sequence for \"{}\" ({})".format(
+            seq[0], seq[1]
+        ), max_log)
         typ3 = seq[1]
         checker = _type_check_fun_map[typ3]
         val_index = 0
@@ -63,13 +67,13 @@ def legal_types():
     """ Returns the legal types for inputs. """
     return _legal_types
 
-def print_input_seq(ident, typ3, vals, lvl):
+def print_input_seq(ident, typ3, vals, lvl=2):
     """ Prints an input sequence. """
     log("| ident | {}".format(ident), lvl)
     log("| type  | {}".format(typ3),  lvl)
     log("| seq   | {}".format(vals),  lvl)
 
-def print_test_case(seqs, lvl):
+def print_test_case(seqs, lvl=2):
     """ Prints a test case. """
     log("|-------|", lvl)
     for seq in seqs:
@@ -121,9 +125,15 @@ def _input_seq_of_csv_row(row, length, seq_index, file_name):
     )
 
     # Checking integrity if ``length`` is defined.
-    elif length is not None: _check_input_seq_integrity(
-        row[2:], length, seq_index, file_name, "csv"
-    )
+    elif length is not None:
+        log(
+            ("> checking integrity of sequence for \"{}\" "
+            "(should have {} values)").format(row[0], length),
+            max_log
+        )
+        _check_input_seq_integrity(
+            row[2:], length, seq_index, file_name, "csv"
+        )
 
     # Extracting input ident, type, and values of the input sequence.
     ident = row[0]
@@ -144,7 +154,7 @@ def _input_seq_of_csv_row(row, length, seq_index, file_name):
     return ( ident, typ3, vals )
 
 
-def of_csv_file(file_name):
+def of_csv(file_name):
     """ Reads a csv file and extracts a test case out of it.
     A test case is a list of input sequence.
     An input sequence is an ident, a type, and a list of values. """
@@ -196,12 +206,12 @@ def of_csv_file(file_name):
         )
 
         if flags.type_check_test_cases():
-            log("Type checking test case from \"{}\" (csv)...".format(
+            log("> type-checking test case from \"{}\" (csv)...".format(
                 file_name
-            ), 3)
+            ), max_log)
             type_check(reduced[2])
-            log("> success.", 3)
-            new_line(3)
+            log("> success.", max_log)
+            new_line(max_log)
 
 
         # Returning final list of input sequences.
@@ -211,3 +221,15 @@ def of_csv_file(file_name):
     finally:
         if fil3 is not None: fil3.close()
 
+
+# Maps extensions to test case creation functions.
+_extension_map = {
+    ".csv": of_csv
+}
+
+def of_file(path):
+    """ Creates a test case from a file. """
+
+    for extension, create in _extension_map.iteritems():
+        if path.endswith(extension):
+            return create(path)
