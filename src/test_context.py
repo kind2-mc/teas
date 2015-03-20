@@ -1,53 +1,56 @@
-""" A test context is a list of \"binaries\", a list of \"oracles\",
-and a list of \"test cases\".
+""" A test context is a file, a name, a list of \"binaries\", a list
+of \"oracles\", and a list of \"test cases\".
 
-A \"binary\"
-  is a pair of the path to the binary, and a description.
+A \"binary\" (triplet)
+  is a name, a command, and a description.
 
-An \"oracle\"
-  is a path to the oracle, a name, a global flag, and a description.
+An \"oracle\" (4-uple)
+  is a name, a command, a global flag, and a description.
 
-A \"test case\"
-  is a path to the test case, a name, a format (e.g. \"csv\"), and
+A \"test case\" (4-uple)
+  is a name, a file to the test case, a format (e.g. \"csv\"), and
   a description.
 """
 
 import xml.etree.ElementTree as xet
-import os
+import os, shlex
 
-from stdout import log, new_line, error, info
+from stdout import log, new_line, error, info, warning
 from excs import TestCtxtExc
 import flags
 
 def _print_binary(binary, lvl):
     """ Prints a binary from a test context. """
-    path = binary[0]
-    log( "  > {}".format(path), lvl )
+    name = binary["name"]
+    cmd = binary["cmd"]
+    log( "  > {} | {}".format(name, cmd), lvl )
 
 def _print_oracle(oracle, lvl):
     """ Prints an oracle from a test context. """
-    path = oracle[0]
-    name = oracle[1]
-    glob = oracle[2]
+    name = oracle["name"]
+    cmd = oracle["cmd"]
+    glob = oracle["global"]
     log( "  > ({}) {} | {}".format(
-        glob, name, path
+        glob, name, cmd
     ), lvl )
 
 def _print_testcase(testcase, lvl):
     """ Prints a test case from a test context. """
-    path = testcase[0]
-    name = testcase[1]
-    frmt = testcase[2]
+    name = testcase["name"]
+    path = testcase["file"]
+    frmt = testcase["format"]
     log( "  > ({}) {} | {}".format(
         frmt, name, path
     ), lvl)
 
 def print_test_context(context, lvl=2):
     """ Prints a test context. """
-    binaries = context[0]
-    oracles = context[1]
-    testcases = context[2]
+    name = context["name"]
+    binaries = context["binaries"]
+    oracles = context["oracles"]
+    testcases = context["testcases"]
 
+    log( "\"{}\"".format(name), lvl )
     log( "> binaries:", lvl)
     for binary in binaries: _print_binary(binary, lvl)
 
@@ -70,12 +73,32 @@ def _attribute_of_xml(tree, att, kind, count, fil3):
         "xml"
     )
 
+_already_warned = False
+def _normalize_path(path):
+    """ Formats a path. """
+    global _already_warned
+    if not _already_warned:
+        warning("Path normalization uses \"relpath\".")
+        _already_warned = True
+    return os.path.relpath(path)
+
+def _normalize_cmd(cmd):
+    """ Splits a command and formats the path to the binary. """
+    split = shlex.split(cmd)
+    split[0] = _normalize_path(split[0])
+    return split
+
 def _binary_of_xml(tree, count, fil3):
     """ Creates a binary from an xml tree.
-    A binary is a pair of the path, and a description. """
+    A binary is a command, a name, and a description. """
 
-    path = _attribute_of_xml(tree, "path", "binary", count, fil3)
-    return ( path, tree.text )
+    name = _attribute_of_xml(tree, "name", "binary", count, fil3)
+    cmd = _attribute_of_xml(tree, "cmd", "binary", count, fil3)
+    return {
+        "name": name,
+        "cmd": _normalize_cmd(cmd),
+        "desc": tree.text
+    }
 
 def _global_flag_of_xml(tree, count, fil3):
     """ Retrieves the value of the global flag of an xml tree.
@@ -98,29 +121,42 @@ def _oracle_of_xml(tree, count, fil3):
     """ Creates an oracle from an xml tree.
     An oracle is a path, a global flag, and a description. """
 
-    path = _attribute_of_xml(tree, "path", "oracle", count, fil3)
+    cmd = _attribute_of_xml(tree, "cmd", "oracle", count, fil3)
     name = _attribute_of_xml(tree, "name", "oracle", count, fil3)
     glob = _global_flag_of_xml(tree, count, fil3)
 
-    return ( path, name, glob, tree.text )
+    return {
+        "name": name,
+        "cmd": _normalize_cmd(cmd),
+        "global": glob,
+        "desc": tree.text
+    }
 
 def _testcase_of_xml(tree, count, fil3):
     """ Creates a test case from an xml tree.
-    A test case is a path, a name, a format, and a description. """
+    A test case is a file, a name, a format, and a description. """
 
-    path = _attribute_of_xml(tree, "path", "test case", count, fil3)
     name = _attribute_of_xml(tree, "name", "test case", count, fil3)
+    path = _attribute_of_xml(tree, "path", "test case", count, fil3)
     form4t = _attribute_of_xml(
         tree, "format", "test case", count, fil3
     )
 
-    return ( path, name, form4t, tree.text )
+    return {
+        "name": name,
+        "file": _normalize_path(path),
+        "format": form4t,
+        "desc": tree.text
+    }
 
 
 def of_xml(path):
     """ Creates a test context from an xml file. """
     xml_tree = xet.parse(path)
     root = xml_tree.getroot()
+
+    # Retrieving context name.
+    name = _attribute_of_xml(root, "name", "root", 0, path)
 
     # Retrieving binaries.
     binary_count = 0
@@ -146,7 +182,13 @@ def of_xml(path):
         testcase = _testcase_of_xml(tree, testcase_count, path)
         testcase_list.append(testcase)
 
-    return ( binary_list, oracle_list, testcase_list )
+    return {
+        "file": path,
+        "name": name,
+        "binaries": binary_list,
+        "oracles": oracle_list,
+        "testcases": testcase_list
+    }
 
 # Maps extensions to test context creation function.
 _extension_map = {

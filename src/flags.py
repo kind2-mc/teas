@@ -64,10 +64,51 @@ def type_check_test_cases_default():
     return _type_check_test_cases_default
 
 
+# Test execution things.
+
+_run_tests_default = True
+_run_tests = _run_tests_default
+
+def run_tests():
+    """ Returns true if the tests should be ran. """
+    return _run_tests
+
+def set_run_tests(value):
+    """ Sets the value of the run_tests flag. """
+    global _run_tests
+    _run_tests = value
+
+def run_tests_default():
+    """ Returns the default value of the run_tests flag. """
+    return _run_tests_default
+
+_max_proc_default = 4
+_max_proc = _max_proc_default
+
+def max_proc():
+    """ Returns the maximum number of processes to run in
+    parallel. """
+    return _max_proc
+
+def set_max_proc(value):
+    """ Sets the value of the max_proc flag. """
+    global _max_proc
+    _max_proc = value
+
+def max_proc_default():
+    """ Returns the default value of the max_proc flag. """
+    return _max_proc_default
+
+
+
+
 _flags = [
     ("log level", log_lvl),
     ("Test context flags", None),
-    ("type-check test cases", type_check_test_cases)
+    ("type-check test cases", type_check_test_cases),
+    ("Test execution flags", None),
+    ("run tests", run_tests),
+    ("max proc count", max_proc)
 ]
 
 

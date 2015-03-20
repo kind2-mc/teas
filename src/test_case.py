@@ -48,13 +48,13 @@ def type_check(seqs):
     seq_index = 0
     for seq in seqs:
         seq_index += 1
+        typ3 = seq["type"]
         log("> type-checking value sequence for \"{}\" ({})".format(
-            seq[0], seq[1]
+            seq["ident"], typ3
         ), max_log)
-        typ3 = seq[1]
         checker = _type_check_fun_map[typ3]
         val_index = 0
-        for val in seq[2]:
+        for val in seq["seq"]:
             val_index += 1
             if not checker(val): raise TypeError(
                 ("expected value of type {} but found \"{}\" "
@@ -77,7 +77,9 @@ def print_test_case(seqs, lvl=2):
     """ Prints a test case. """
     log("|-------|", lvl)
     for seq in seqs:
-        print_input_seq(seq[0], seq[1], seq[2], lvl)
+        print_input_seq(
+            seq["ident"], seq["type"], seq["seq"], lvl
+        )
         log("|-------|", lvl)
 
 def _check_input_seq_integrity(
@@ -151,7 +153,7 @@ def _input_seq_of_csv_row(row, length, seq_index, file_name):
     )
 
     # Returning input sequence as a triplet.
-    return ( ident, typ3, vals )
+    return { "ident": ident, "type": typ3, "seq": vals }
 
 
 def of_csv(file_name):
@@ -190,7 +192,7 @@ def of_csv(file_name):
                 row, length, seq_index, file_name
             )
             # Setting length.
-            length = len(triplet[2])
+            length = len(triplet["seq"])
             seqs.append(triplet)
             # Returning formatted input sequence.
             return (seq_index, length, seqs)

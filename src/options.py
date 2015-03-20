@@ -3,7 +3,7 @@
 import sys
 
 from stdout import log, warning, error, new_line
-import flags
+import flags, lib
 
 # List of options. An option is a triplet of:
 # * a list of string representations of the option,
@@ -15,10 +15,14 @@ import flags
 # is understood as an option section header.
 _options = []
 
+_options_end = "--"
+
 def _print_help():
     """ Prints the options. """
     print("")
-    print("Usage: [options] <file>")
+    print("Usage: <option>* <file>")
+    print("   or: <option>* {} <file>+".format(_options_end))
+    print("where <option> can be")
     for triplet in _options:
         if len(triplet[0]) < 1:
             new_line()
@@ -54,10 +58,14 @@ def parse_arguments():
         Otherwise, finds the option triplet corresponding to
         the head of the list, applies the action, and loops on the
         resulting list. """
-        if len(args) < 2:            # One argument or less left, returning.
+        if len(args) < 2:
+            # One argument or less left, returning.
             return args
         else:
             option = args[0]
+            if option == _options_end:
+                # End of option, remaining arguments should be files.
+                return args[1:]
             triplet = _find_option_triplet(option)
             if triplet == None:
                 # Unknown option, error.
@@ -77,6 +85,12 @@ def parse_arguments():
                 # Looping with updated tail of arguments.
                 # Not tail call optimization T_T.
                 else: return handle_options(nu_args)
+
+    if len(args) < 1:
+        _print_help()
+        error("No file specified.")
+        new_line(1)
+        sys.exit(1)
 
     args = handle_options(args)
 
@@ -153,23 +167,56 @@ _add_option_header((
 
 # Test case type-check option.
 def _type_check_action(tail):
-    if tail[0] in [ "true", "True" ]:
-        flags.set_type_check_test_cases(True)
-    elif tail[0] in [ "false", "False" ]:
-        flags.set_type_check_test_cases(False)
-    else: raise ValueError(
-        "expected bool value but found \"{}\"".format(tail[0])
-    )
+    flags.set_type_check_test_cases(lib.bool_of_string(tail[0]))
     return tail[1:]
 _add_option(
     ["--type_check"],
     [
-        "> bool (default {})".format(
+        "> of bool (default {})".format(
             flags.type_check_test_cases_default()
         ),
         "if true, test cases will be type checked (may be expensive",
         "for large test cases)"
     ],
     _type_check_action
+)
+
+
+# Test execution section header.
+_add_option_header((
+    ["Test execution options."]
+))
+
+# Run tests option.
+def _run_tests_action(tail):
+    flags.set_run_tests(lib.bool_of_string(tail[0]))
+    return tail[1:]
+_add_option(
+    ["--run_tests"],
+    [
+        "> bool (default {})".format(
+            flags.run_tests_default()
+        ),
+        "if true, test cases will be executed"
+    ],
+    _run_tests_action
+)
+
+# Max proc option.
+def _max_proc_action(tail):
+    try: flags.set_max_proc(int(tail[0]))
+    except ValueError: raise ValueError(
+        "expected bool value but found \"{}\"".format(tail[0])
+    )
+    return tail[1:]
+_add_option(
+    ["--max_proc"],
+    [
+        "> int (default {})".format(
+            flags.max_proc_default()
+        ),
+        "maximum number of processes to run in parallel"
+    ],
+    _max_proc_action
 )
 

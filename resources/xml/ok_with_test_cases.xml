@@ -1,28 +1,28 @@
 <?xml version="1.0"?>
-<data>
-    <binary path="path/to/binary1">
+<data name="context1">
+    <binary name="binary_1" cmd="path/to/binary1 --run">
         Description of binary1.
     </binary>
 
-    <binary path="path/to/binary2">
+    <binary name="binary_2" cmd="path/to/binary2 --run">
         Description of binary2.
     </binary>
 
     <oracle
         global="true"
-        path="path/to/global/oracle"
+        cmd="path/to/global/oracle --run"
         name="global_oracle_name">
         Description of the global oracle.
     </oracle>
 
     <oracle
-        path="path/to/oracle1"
+        cmd="path/to/oracle1 --run"
         name="oracle1_name">
         Description of oracle1.
     </oracle>
 
     <oracle
-        path="path/to/oracle2"
+        cmd="path/to/oracle2 --run"
         name="oracle2_name">
         Description of oracle2.
     </oracle>
