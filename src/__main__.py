@@ -3,19 +3,43 @@
 import sys, os
 
 from stdout import new_line, log, error, warning
-import lib, options, flags, test_case, test_context, execution
+import lib, iolib, options, flags, test_case, test_context, execution
 
 max_log = flags.max_log_lvl()
 
+new_line(1)
+
 # Parse command line arguments.
-files = options.parse_arguments()
+all_files = options.parse_arguments()
 
-new_line()
-
+# Print configuration.
 flags.print_flags(max_log)
 new_line(max_log)
 
-new_line(max_log)
+# Only keeping files that actually exist.
+def file_exists(path):
+    if iolib.is_path_a_file(path): return True
+    else:
+        warning("Skipping input file \"{}\" (does not exist).".format(path))
+        warning("")
+        return False
+files = filter( file_exists, all_files )
+
+# Exiting if no file to run on.
+if len(files) < 1:
+    warning("No file to run on, done.")
+    warning("")
+    sys.exit(0)
+
+# Create output directory if necessary.
+try: iolib.mkdir(flags.out_dir())
+except iolib.IOLibError as e:
+    error("while creating output directory:")
+    error("> {}".format(e.msg))
+    error("")
+    sys.exit(1)
+
+# Starting to do things.
 log( "Running on files {}.".format(files), max_log )
 new_line(max_log)
 
@@ -79,10 +103,13 @@ for ctxt in test_contexts:
         continue
 
     # Context file directory.
-    context_dir = lib.file_name_of_path(fil3)
+    context_dir = iolib.join_path(
+        flags.out_dir(), lib.file_name_of_path(fil3)
+    )
     if os.path.isdir(context_dir):
         warning("Log directory    \"{}\"".format(context_dir))
-        warning("for context file \"{}\" already exists.".format(fil3))
+        warning("for context file \"{}\"".format(fil3))
+        warning("already exists.")
         new_line(1)
     else:
         log("Creating log directory \"{}\"".format(context_dir),
@@ -90,7 +117,11 @@ for ctxt in test_contexts:
         log("for context file       \"{}\".".format(fil3),
             max_log)
         new_line(max_log)
-        # os.makedirs(os.path.join(context_dir))
+        try: iolib.mkdir(context_dir)
+        except iolib.IOLibError as e:
+            error("{}".format(e.msg))
+            new_line(1)
+            continue
 
 
     for binary in binaries:
@@ -103,9 +134,10 @@ for ctxt in test_contexts:
         )
         if os.path.isdir(binary_dir):
             warning("Log directory \"{}\"".format(binary_dir))
-            warning("for binary    \"{}\" already exists.".format(
+            warning("for binary    \"{}\"".format(
                 binary_name
             ))
+            warning("already exists.")
             new_line(1)
         else:
             log("Creating log directory \"{}\"".format(binary_dir),
@@ -113,7 +145,11 @@ for ctxt in test_contexts:
             log("for binary             \"{}\".".format(binary_name),
                 max_log)
             new_line(max_log)
-            # os.makedirs(os.path.join(binary_dir))
+            try: iolib.mkdir(binary_dir)
+            except iolib.IOLibError as e:
+                error("{}".format(e.msg))
+                new_line(1)
+                continue
 
         for testcase in testcases:
 
@@ -125,9 +161,10 @@ for ctxt in test_contexts:
             ))
             if os.path.isfile(testcase_log_file):
                 warning("Log file     \"{}\"".format(testcase_log_file))
-                warning("for testcase \"{}\" already exists.".format(
+                warning("for testcase \"{}\"".format(
                     testcase_file
                 ))
+                warning("already exists.")
                 new_line(1)
 
             log("Launching \"{}\" on test case \"{}\".".format(
@@ -135,13 +172,18 @@ for ctxt in test_contexts:
             ))
             log("Logging to \"{}\".".format(testcase_log_file),
                 max_log)
-            new_line(max_log)
+            new_line()
 
-            execution.run_binary(execution.mk_test_execution(
-                name, testcase_log_file, binary, testcase, oracles
-            ))
+            test_execution = execution.mk_test_execution(
+                name, fil3, testcase_log_file, binary, testcase, oracles
+            )
+            execution.print_test_execution(
+                test_execution, max_log, True
+            )
+
+            execution.run(test_execution)
 
 
 new_line()
 log("Done.")
-new_line()
+new_line(1)

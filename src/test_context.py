@@ -16,7 +16,7 @@ import xml.etree.ElementTree as xet
 import os, shlex
 
 from stdout import log, new_line, error, info, warning
-from excs import TestCtxtExc
+from excs import TestCtxtError
 import flags
 
 def _print_binary(binary, lvl):
@@ -65,7 +65,7 @@ def _attribute_of_xml(tree, att, kind, count, fil3):
     """ Returns attribute ``att`` from ``tree``, fails if it's
     not a valid key. """
     if att in tree.attrib.keys(): return tree.attrib[att]
-    else: raise TestCtxtExc(
+    else: raise TestCtxtError(
         "{} element number {} has no \"{}\" attribute".format(
             kind, count, att
         ),
@@ -78,7 +78,9 @@ def _normalize_path(path):
     """ Formats a path. """
     global _already_warned
     if not _already_warned:
+        new_line(1)
         warning("Path normalization uses \"relpath\".")
+        new_line(1)
         _already_warned = True
     return os.path.relpath(path)
 
@@ -107,7 +109,7 @@ def _global_flag_of_xml(tree, count, fil3):
         glob = _attribute_of_xml(tree, "global", "", "", "")
         if glob in [ "true", "True" ]: return True
         elif glob in [ "false", "False" ]: return False
-        else: raise TestCtxtExc(
+        else: raise TestCtxtError(
             ("expected bool value for global flag but "
             "found \"{}\" (in oracle number {})").format(
                 glob, count
@@ -115,7 +117,7 @@ def _global_flag_of_xml(tree, count, fil3):
             fil3,
             "xml"
         )
-    except TestCtxtExc: return False
+    except TestCtxtError: return False
 
 def _oracle_of_xml(tree, count, fil3):
     """ Creates an oracle from an xml tree.

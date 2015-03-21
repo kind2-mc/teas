@@ -1,13 +1,12 @@
 """
-A test case is a list of input sequences.
-An input sequence is an ident, a type, and a list of values.
+A test sequence is an ident, a type, and an input sequence.
 """
 
 import sys, csv
 
 from stdout import error, log, new_line
-from excs import InputSeqExc
-import flags
+from excs import InputSeqError
+import flags, lib
 
 max_log = flags.max_log_lvl()
 
@@ -71,7 +70,7 @@ def print_input_seq(ident, typ3, vals, lvl=2):
     """ Prints an input sequence. """
     log("| ident | {}".format(ident), lvl)
     log("| type  | {}".format(typ3),  lvl)
-    log("| seq   | {}".format(vals),  lvl)
+    log("| seq   | {}".format(lib.string_join(vals, ", ")),  lvl)
 
 def print_test_case(seqs, lvl=2):
     """ Prints a test case. """
@@ -90,7 +89,7 @@ def _check_input_seq_integrity(
     length. """
     seq_length = len(seq)
     if (length is None) and (seq_length < 3):
-        raise InputSeqExc(
+        raise InputSeqError(
             ("Illegal input sequence has less than 3 "
             "columns"),
             file_name,
@@ -98,7 +97,7 @@ def _check_input_seq_integrity(
             form4t
         )
     elif (not (length is None)) and (seq_length != length):
-        raise InputSeqExc(
+        raise InputSeqError(
             ("Inconsistent test case, first input sequence(s) "
             "are {} inputs long but found a sequence of length "
             "{}").format(length, seq_length - 2),
@@ -118,7 +117,7 @@ def _input_seq_of_csv_row(row, length, seq_index, file_name):
     Checks if the type is a legal type. """
 
     # Legal rows must have at least 3 elements.
-    if len(row) < 3: raise InputSeqExc(
+    if len(row) < 3: raise InputSeqError(
         ("Expecting an identifier, a type, and a sequence of values "
         "but found {}").format(row),
         file_name,
@@ -143,7 +142,7 @@ def _input_seq_of_csv_row(row, length, seq_index, file_name):
     vals = row[2:]
 
     # Checking that ``typ3`` is a legal type.
-    if typ3 not in _legal_types: raise InputSeqExc(
+    if typ3 not in _legal_types: raise InputSeqError(
         "Unsupported type \"{}\" for input \"{}\"".format(
             typ3, ident
         ),
@@ -169,7 +168,7 @@ def of_csv(file_name):
         # Not tweaking the reader: ``sep=','`` and ``quote='\"'``.
         reader = csv.reader(fil3)
 
-    except IOError as e: raise InputSeqExc(
+    except IOError as e: raise InputSeqError(
         "IOError({}): {}".format(e.errno, e.strerror),
         file_name,
         0,

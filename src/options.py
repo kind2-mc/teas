@@ -1,9 +1,9 @@
 """ Option handling. """
 
-import sys
+import sys, os
 
 from stdout import log, warning, error, new_line
-import flags, lib
+import flags, lib, iolib
 
 # List of options. An option is a triplet of:
 # * a list of string representations of the option,
@@ -19,20 +19,20 @@ _options_end = "--"
 
 def _print_help():
     """ Prints the options. """
-    print("")
-    print("Usage: <option>* <file>")
-    print("   or: <option>* {} <file>+".format(_options_end))
-    print("where <option> can be")
+    log("", 1)
+    log("Usage: <option>* <file>", 1)
+    log("   or: <option>* {} <file>+".format(_options_end), 1)
+    log("where <option> can be", 1)
     for triplet in _options:
         if len(triplet[0]) < 1:
-            new_line()
+            new_line(1)
             for header_line in triplet[1]:
-                print("|===| {}".format(header_line))
+                log("|===| {}".format(header_line), 1)
         else:
-            print("> {}".format(triplet[0]))
+            log("> {}".format(triplet[0]), 1)
             for desc_line in triplet[1]:
-                print("  {}".format(desc_line))
-    new_line()
+                log("  {}".format(desc_line), 1)
+    new_line(1)
 
 def _print_help_exit(code):
     """ Prints the options and exits. """
@@ -63,11 +63,11 @@ def parse_arguments():
             return args
         else:
             option = args[0]
+            triplet = _find_option_triplet(option)
             if option == _options_end:
                 # End of option, remaining arguments should be files.
                 return args[1:]
-            triplet = _find_option_triplet(option)
-            if triplet == None:
+            elif triplet == None:
                 # Unknown option, error.
                 _print_help()
                 error( "Unexpected option \"{}\".".format(option) )
@@ -79,7 +79,7 @@ def parse_arguments():
                     # Option handler crashed, error.
                     _print_help()
                     error( "Error on option \"{}\":".format(option) )
-                    error( "  {}".format(e) )
+                    error( "> {}.".format(e) )
                     new_line(1)
                     sys.exit(1)
                 # Looping with updated tail of arguments.
@@ -95,8 +95,6 @@ def parse_arguments():
     args = handle_options(args)
 
     return args
-
-
 
 
 
@@ -167,7 +165,7 @@ _add_option_header((
 
 # Test case type-check option.
 def _type_check_action(tail):
-    flags.set_type_check_test_cases(lib.bool_of_string(tail[0]))
+    flags.set_type_check_test_cases( lib.bool_of_string(tail[0]) )
     return tail[1:]
 _add_option(
     ["--type_check"],
@@ -189,7 +187,7 @@ _add_option_header((
 
 # Run tests option.
 def _run_tests_action(tail):
-    flags.set_run_tests(lib.bool_of_string(tail[0]))
+    flags.set_run_tests( lib.bool_of_string(tail[0]) )
     return tail[1:]
 _add_option(
     ["--run_tests"],
@@ -204,10 +202,7 @@ _add_option(
 
 # Max proc option.
 def _max_proc_action(tail):
-    try: flags.set_max_proc(int(tail[0]))
-    except ValueError: raise ValueError(
-        "expected bool value but found \"{}\"".format(tail[0])
-    )
+    flags.set_max_proc( lib.int_of_string(tail[0]) )
     return tail[1:]
 _add_option(
     ["--max_proc"],
@@ -218,5 +213,29 @@ _add_option(
         "maximum number of processes to run in parallel"
     ],
     _max_proc_action
+)
+
+
+# Output directory option.
+def _out_dir_action(tail):
+    path = tail[0]
+    iolib.is_legal_dir_path(
+        path,
+        if_not_there_do=(lambda: warning(
+            ("Output directory \"{}\" does not exist "
+             "and will be created.\n").format(path)
+        ))
+    )
+    flags.set_out_dir(path)
+    return tail[1:]
+_add_option(
+    ["--out_dir"],
+    [
+        "> path (default {})".format(
+            flags.out_dir_default()
+        ),
+        "sets the output directory"
+    ],
+    _out_dir_action
 )
 

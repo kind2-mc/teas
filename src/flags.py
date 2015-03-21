@@ -99,6 +99,22 @@ def max_proc_default():
     """ Returns the default value of the max_proc flag. """
     return _max_proc_default
 
+_out_dir_default = "./"
+_out_dir = _out_dir_default
+
+def out_dir():
+    """ Returns the out directory. """
+    return _out_dir
+
+def set_out_dir(value):
+    """ Sets the value of the out directory. """
+    global _out_dir
+    _out_dir = value
+
+def out_dir_default():
+    """ Returns the default value for the out directory. """
+    return _out_dir_default
+
 
 
 
@@ -108,7 +124,8 @@ _flags = [
     ("type-check test cases", type_check_test_cases),
     ("Test execution flags", None),
     ("run tests", run_tests),
-    ("max proc count", max_proc)
+    ("max proc count", max_proc),
+    ("out directory", out_dir),
 ]
 
 
