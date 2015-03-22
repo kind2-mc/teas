@@ -13,11 +13,13 @@ A \"test case\" (4-uple)
 """
 
 import xml.etree.ElementTree as xet
-import os, shlex
+import shlex
 
 from stdout import log, new_line, error, info, warning
 from excs import TestCtxtError
-import flags
+import iolib, flags
+
+max_log = flags.max_log_lvl()
 
 def _print_binary(binary, lvl):
     """ Prints a binary from a test context. """
@@ -60,7 +62,6 @@ def print_test_context(context, lvl=2):
     log( "> testcases:", lvl)
     for testcase in testcases: _print_testcase(testcase, lvl)
 
-
 def _attribute_of_xml(tree, att, kind, count, fil3):
     """ Returns attribute ``att`` from ``tree``, fails if it's
     not a valid key. """
@@ -73,21 +74,10 @@ def _attribute_of_xml(tree, att, kind, count, fil3):
         "xml"
     )
 
-_already_warned = False
-def _normalize_path(path):
-    """ Formats a path. """
-    global _already_warned
-    if not _already_warned:
-        new_line(1)
-        warning("Path normalization uses \"relpath\".")
-        new_line(1)
-        _already_warned = True
-    return os.path.relpath(path)
-
 def _normalize_cmd(cmd):
     """ Splits a command and formats the path to the binary. """
     split = shlex.split(cmd)
-    split[0] = _normalize_path(split[0])
+    split[0] = iolib.norm_path(split[0])
     return split
 
 def _binary_of_xml(tree, count, fil3):
@@ -146,11 +136,10 @@ def _testcase_of_xml(tree, count, fil3):
 
     return {
         "name": name,
-        "file": _normalize_path(path),
+        "file": iolib.norm_path(path),
         "format": form4t,
         "desc": tree.text
     }
-
 
 def of_xml(path):
     """ Creates a test context from an xml file. """
@@ -207,3 +196,208 @@ def of_file(path):
                 flags.max_log_lvl()
             )
             return function(path)
+
+def _sanitize_binaries(binaries, context_file):
+    """ If two binaries
+
+    - have the same command, remove the second one;
+    - have the same name but have different commands, rename the second one.
+
+    If any of the above applies, take action and return new list of binaries
+    with a flag saying something changed. The reason is that an action can
+    break the sanity of previously checked binaries. """
+    re_sanitize = False
+    original_len = len(binaries)
+    # Binaries inspected so far.
+    binaries_suffix = []
+
+    # Sanitizing binaries.
+    while len(binaries) > 0:
+
+        # If we already changed something, just copy ``binaries`` to
+        # ``binaries_suffix``.
+        if re_sanitize:
+            binary = binaries.pop()
+            binaries_suffix.append(binary)
+            continue
+
+        binary2 = binaries.pop()
+        name2 = binary2["name"]
+        cmd2 = binary2["cmd"]
+
+        # Command check.
+
+        have_same_cmd = filter(
+            (lambda bn: cmd2 == bn["cmd"]), binaries_suffix
+        )
+        l_cmd = len(have_same_cmd)
+
+        if l_cmd > 1:
+            # Unreachable.
+            assert False
+
+        elif l_cmd == 1:
+            # Redundancy detected.
+            re_sanitize = True
+            binary1 = have_same_cmd[0]
+            name1 = binary1["name"]
+
+            warning( "Redundant binaries detected in \"{}\"".format(
+                context_file
+            ) )
+            warning( "> \"{}\" and \"{}\"".format( name1, name2 ) )
+            warning( "use the same command" )
+            warning( "> \"{}\"".format( cmd ) )
+            warning( "Removing the second one." )
+            # Skipping the rest of this iteration (forgetting ``binary2``).
+            continue
+
+        else:
+            # No redundancy.
+            pass
+
+        # Name check.
+
+        have_same_name = filter(
+            (lambda bin: name2 == bin["name"]), binaries_suffix
+        )
+        l_name = len(have_same_name)
+
+        if l_name > 1:
+            # Unreachable.
+            assert False
+
+        elif l_name == 1:
+            # Redundancy detected.
+            re_sanitize = True
+            nu_name = "{}_2".format(name2)
+
+            warning( "Binaries with identical names detected in \"{}\"".format(
+                context["file"]
+            ) )
+            warning( "> \"{}\"".format( name2 ) )
+            warning( "but use different command. Renaming second one to" )
+            warning( "> \"{}\"".format( nu_name ) )
+            binary2["name"] = nu_name
+
+        else:
+            # No redundancy.
+            pass
+
+        # Passed command check, keeping ``binary2`` (potentially renamed).
+        binaries_suffix.append(binary2)
+
+    # At this point ``binaries`` should be empty.
+    assert len(binaries) == 0
+
+    # Restoring original order.
+    binaries_suffix.reverse()
+
+    # Either we removed an element and should re-sanitize...
+    if re_sanitize: assert len(binaries_suffix) == original_len - 1
+    # ... or we did nothing.
+    else: assert len(binaries_suffix) == original_len
+
+    return (re_sanitize, binaries_suffix)
+
+def _sanitize_testcases(testcases, context_file):
+    """ If two test cases point to the same file remove the second one and
+    return updated list of testcases with a flag saying something changed.
+    """
+    re_sanitize = False
+    original_len = len(testcases)
+    # Test cases inspected so far.
+    testcases_suffix = []
+
+    # Sanitizing test cases.
+    while len(testcases) > 0:
+
+        # If we already changed something, just copy ``testcases`` to
+        # ``testcases_suffix``.
+        if re_sanitize:
+            testcase = testcases.pop()
+            testcases_suffix.append(testcase)
+            continue
+
+        testcase2 = testcases.pop()
+        file2 = testcase2["file"]
+        name2 = testcase2["name"]
+
+        have_same_file = filter(
+            (lambda tc: file2 == tc["file"]), testcases_suffix
+        )
+        l_file = len(have_same_file)
+
+        if l_file > 1:
+            # Unreachable.
+            assert False
+
+        elif l_file == 1:
+            re_sanitize = True
+            testcase1 = have_same_cmd[0]
+            name1 = testcase1["name"]
+
+            warning( "Redundant test cases detected in \"{}\"".format(
+                context_file
+            ) )
+            warning( "> \"{}\" and \"{}\"".format( name1, name2 ) )
+            warning( "point to the same file" )
+            warning( "> \"{}\"".format( file2 ) )
+            warning( "Removing the second one." )
+            # Skipping the rest of this iteration (forgetting ``testcase2``).
+            continue
+
+        else:
+            # No redundancy.
+            pass
+
+        # Passed file name check, keeping ``testcase2``.
+        testcases_suffix.append(testcase2)
+
+    # At this point ``testcases`` should be empty.
+    assert len(testcases) == 0
+
+    # Restoring original order.
+    testcases_suffix.reverse()
+
+    # Either we removed an element and should re-sanitize...
+    if re_sanitize: assert len(testcases_suffix) == original_len - 1
+    # ... or we did nothing.
+    else: assert len(testcases_suffix) == original_len
+
+    return (re_sanitize, testcases_suffix)
+
+def sanitize(context, lvl=max_log):
+    """ If two binaries
+
+    - have the same command, remove the second one;
+    - have the same name but have different commands, rename the second one.
+
+    If two test cases point to the same file, remove the second one.
+
+    Iterate binary check until fixed-point, same for test cases. """
+    context_file = context["file"]
+
+    binaries = context["binaries"]
+    should_sanitize_binaries = True
+    log( "Sanitizing binaries for \"{}\".".format(context["file"]), lvl )
+    while should_sanitize_binaries:
+        should_sanitize_binaries, binaries = _sanitize_binaries(
+            binaries, context_file
+        )
+
+    # Updating context with new binaries.
+    context["binaries"] = binaries
+
+    testcases = context["testcases"]
+    should_sanitize_testcases = True
+    log( "Sanitizing test cases.", lvl )
+    while should_sanitize_testcases:
+        should_sanitize_testcases, testcases = _sanitize_testcases(
+            testcases, context_file
+        )
+
+    # Updating context with new testcases.
+    context["testcases"] = testcases
+
+    return context

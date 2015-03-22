@@ -7,6 +7,10 @@ from excs import IOLibError
 
 # File system io-s.
 
+def norm_path(path):
+    """ Retruns a normalized path. """
+    return os.path.normpath(path)
+
 def join_path(path1, path2):
     """ Returns the join two paths. """
     return os.path.join(path1, path2)

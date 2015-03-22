@@ -238,4 +238,3 @@ _add_option(
     ],
     _out_dir_action
 )
-

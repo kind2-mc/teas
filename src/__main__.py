@@ -58,8 +58,12 @@ def get_test_executions(files):
         context = test_context.of_file(fil3)
         log("Success.")
         new_line()
-        test_context.print_test_context(context, max_log)
+        test_context.print_test_context(context)
+        new_line()
+        sane_context = test_context.sanitize(context, max_log)
         new_line(max_log)
+        test_context.print_test_context(context)
+        new_line()
 
         for testcase in context["testcases"]:
             new_line(max_log)
@@ -114,22 +118,22 @@ def get_test_executions(files):
         context_dir = iolib.join_path(
             flags.out_dir(), lib.file_name_of_path(fil3)
         )
-        if os.path.isdir(context_dir):
-            warning("Log directory    \"{}\"".format(context_dir))
-            warning("for context file \"{}\"".format(fil3))
-            warning("already exists.")
+        # if os.path.isdir(context_dir):
+        #     warning("Log directory    \"{}\"".format(context_dir))
+        #     warning("for context file \"{}\"".format(fil3))
+        #     warning("already exists.")
+        #     new_line(1)
+        # else:
+        #     log("Creating log directory \"{}\"".format(context_dir),
+        #         max_log)
+        #     log("for context file       \"{}\".".format(fil3),
+        #         max_log)
+        #     new_line(max_log)
+        try: iolib.mkdir(context_dir)
+        except iolib.IOLibError as e:
+            error("{}".format(e.msg))
             new_line(1)
-        else:
-            log("Creating log directory \"{}\"".format(context_dir),
-                max_log)
-            log("for context file       \"{}\".".format(fil3),
-                max_log)
-            new_line(max_log)
-            try: iolib.mkdir(context_dir)
-            except iolib.IOLibError as e:
-                error("{}".format(e.msg))
-                new_line(1)
-                continue
+            continue
 
 
         for binary in binaries:
@@ -140,24 +144,24 @@ def get_test_executions(files):
             binary_dir = os.path.join(
                 context_dir, lib.to_file_name(binary_name)
             )
-            if os.path.isdir(binary_dir):
-                warning("Log directory \"{}\"".format(binary_dir))
-                warning("for binary    \"{}\"".format(
-                    binary_name
-                ))
-                warning("already exists.")
+            # if os.path.isdir(binary_dir):
+            #     warning("Log directory \"{}\"".format(binary_dir))
+            #     warning("for binary    \"{}\"".format(
+            #         binary_name
+            #     ))
+            #     warning("already exists.")
+            #     new_line(1)
+            # else:
+            #     log("Creating log directory \"{}\"".format(binary_dir),
+            #         max_log)
+            #     log("for binary             \"{}\".".format(binary_name),
+            #         max_log)
+            #     new_line(max_log)
+            try: iolib.mkdir(binary_dir)
+            except iolib.IOLibError as e:
+                error("{}".format(e.msg))
                 new_line(1)
-            else:
-                log("Creating log directory \"{}\"".format(binary_dir),
-                    max_log)
-                log("for binary             \"{}\".".format(binary_name),
-                    max_log)
-                new_line(max_log)
-                try: iolib.mkdir(binary_dir)
-                except iolib.IOLibError as e:
-                    error("{}".format(e.msg))
-                    new_line(1)
-                    continue
+                continue
 
             for testcase in testcases:
 
@@ -169,6 +173,7 @@ def get_test_executions(files):
                 ))
                 if os.path.isfile(testcase_log_file):
                     warning("Log file     \"{}\"".format(testcase_log_file))
+                    warning("for binary   \"{}\"".format(binary_name))
                     warning("for testcase \"{}\"".format(
                         testcase_file
                     ))
@@ -233,14 +238,17 @@ if __name__ == "__main__":
 
     # Creating test execution structures, creating log directory.
     test_executions = get_test_executions(files)
+    job_count = len(test_executions)
 
     if flags.sequential_run():
-        log("Sequential run.")
+        log("Sequential run, {} jobs.".format(job_count))
         new_line()
         map(load_print_run, test_executions)
 
     else:
-        log("Parallel run, pool size is {}.".format(flags.max_proc()))
+        log("Running {} jobs in parallel with {} workers.".format(
+            job_count, flags.max_proc()
+        ))
         new_line()
         p00l = multiprocessing.Pool(flags.max_proc())
         p00l.map(load_testcase_and_run, test_executions)
