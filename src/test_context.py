@@ -15,7 +15,7 @@ A \"test case\" (4-uple)
 import xml.etree.ElementTree as xet
 import shlex
 
-from stdout import log, new_line, error, info, warning
+from stdout import log, error, info, warning
 from excs import TestCtxtError
 import iolib, flags
 
@@ -206,7 +206,11 @@ def _sanitize_binaries(binaries, context_file):
     If any of the above applies, take action and return new list of binaries
     with a flag saying something changed. The reason is that an action can
     break the sanity of previously checked binaries. """
-    re_sanitize = False
+    binaries.reverse()
+    re_sanitize_cmd = False
+    re_sanitize_name = False
+    def re_sanitize():
+        return re_sanitize_name or re_sanitize_cmd
     original_len = len(binaries)
     # Binaries inspected so far.
     binaries_suffix = []
@@ -216,7 +220,7 @@ def _sanitize_binaries(binaries, context_file):
 
         # If we already changed something, just copy ``binaries`` to
         # ``binaries_suffix``.
-        if re_sanitize:
+        if re_sanitize():
             binary = binaries.pop()
             binaries_suffix.append(binary)
             continue
@@ -238,7 +242,7 @@ def _sanitize_binaries(binaries, context_file):
 
         elif l_cmd == 1:
             # Redundancy detected.
-            re_sanitize = True
+            re_sanitize_cmd = True
             binary1 = have_same_cmd[0]
             name1 = binary1["name"]
 
@@ -247,7 +251,7 @@ def _sanitize_binaries(binaries, context_file):
             ) )
             warning( "> \"{}\" and \"{}\"".format( name1, name2 ) )
             warning( "use the same command" )
-            warning( "> \"{}\"".format( cmd ) )
+            warning( "> \"{}\"".format( cmd2 ) )
             warning( "Removing the second one." )
             # Skipping the rest of this iteration (forgetting ``binary2``).
             continue
@@ -269,11 +273,11 @@ def _sanitize_binaries(binaries, context_file):
 
         elif l_name == 1:
             # Redundancy detected.
-            re_sanitize = True
+            re_sanitize_name = True
             nu_name = "{}_2".format(name2)
 
             warning( "Binaries with identical names detected in \"{}\"".format(
-                context["file"]
+                context_file
             ) )
             warning( "> \"{}\"".format( name2 ) )
             warning( "but use different command. Renaming second one to" )
@@ -290,20 +294,18 @@ def _sanitize_binaries(binaries, context_file):
     # At this point ``binaries`` should be empty.
     assert len(binaries) == 0
 
-    # Restoring original order.
-    binaries_suffix.reverse()
-
     # Either we removed an element and should re-sanitize...
-    if re_sanitize: assert len(binaries_suffix) == original_len - 1
-    # ... or we did nothing.
+    if re_sanitize_cmd: assert len(binaries_suffix) == original_len - 1
+    # ... or just renamed one or did nothing.
     else: assert len(binaries_suffix) == original_len
 
-    return (re_sanitize, binaries_suffix)
+    return (re_sanitize(), binaries_suffix)
 
 def _sanitize_testcases(testcases, context_file):
     """ If two test cases point to the same file remove the second one and
     return updated list of testcases with a flag saying something changed.
     """
+    testcases.reverse()
     re_sanitize = False
     original_len = len(testcases)
     # Test cases inspected so far.
@@ -334,7 +336,7 @@ def _sanitize_testcases(testcases, context_file):
 
         elif l_file == 1:
             re_sanitize = True
-            testcase1 = have_same_cmd[0]
+            testcase1 = have_same_file[0]
             name1 = testcase1["name"]
 
             warning( "Redundant test cases detected in \"{}\"".format(
@@ -356,9 +358,6 @@ def _sanitize_testcases(testcases, context_file):
 
     # At this point ``testcases`` should be empty.
     assert len(testcases) == 0
-
-    # Restoring original order.
-    testcases_suffix.reverse()
 
     # Either we removed an element and should re-sanitize...
     if re_sanitize: assert len(testcases_suffix) == original_len - 1

@@ -28,7 +28,7 @@ def init():
             warning(
                 "Skipping input file \"{}\" (does not exist).".format(path)
             )
-            warning("")
+            new_line(1)
             return False
 
     # Discarding duplicates and inexistant files.
@@ -41,8 +41,6 @@ def init():
 
     # Cleaning list of files.
     files = reduce( rm_duplicates_and_inexistant, all_files, [] )
-    # Restoring original order.
-    files.reverse()
 
     # Exiting if no file to run on.
     if len(files) < 1:
@@ -70,8 +68,9 @@ def get_test_executions(files):
         context = test_context.of_file(fil3)
         log("Success.")
         new_line()
-        test_context.print_test_context(context)
-        new_line()
+        log("Before sanitizing:", max_log)
+        test_context.print_test_context(context, max_log)
+        new_line(max_log)
         sane_context = test_context.sanitize(context, max_log)
         new_line(max_log)
         test_context.print_test_context(context)
@@ -197,7 +196,7 @@ def get_test_executions(files):
                 ), max_log)
                 log("will be logged to \"{}\".".format(testcase_log_file),
                     max_log)
-                new_line()
+                new_line(max_log)
 
                 test_execution = execution.mk_test_execution(
                     name, fil3, testcase_log_file, binary, testcase, oracles
@@ -252,18 +251,20 @@ if __name__ == "__main__":
     test_executions = get_test_executions(files)
     job_count = len(test_executions)
 
-    if flags.sequential_run():
-        log("Sequential run, {} jobs.".format(job_count))
-        new_line()
-        map(load_print_run, test_executions)
+    if flags.run_tests():
 
-    else:
-        log("Running {} jobs in parallel with {} workers.".format(
-            job_count, flags.max_proc()
-        ))
-        new_line()
-        p00l = multiprocessing.Pool(flags.max_proc())
-        p00l.map(load_testcase_and_run, test_executions)
+        if flags.sequential_run():
+            log("Sequential run, {} jobs.".format(job_count))
+            new_line()
+            map(load_print_run, test_executions)
+
+        else:
+            log("Running {} jobs in parallel with {} workers.".format(
+                job_count, flags.max_proc()
+            ))
+            new_line()
+            p00l = multiprocessing.Pool(flags.max_proc())
+            p00l.map(load_testcase_and_run, test_executions)
 
 
     new_line()
