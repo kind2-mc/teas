@@ -5,7 +5,7 @@ a binary, a testcase and some oracles. """
 import os
 
 import lib, test_case, flags
-from stdout import new_line, log, warning, error
+from stdout import log, warning, error
 
 max_log = flags.max_log_lvl()
 
@@ -24,7 +24,6 @@ def mk_test_execution(
 
 def print_test_execution(test_execution, lvl=2, print_test_case=False):
     """ Prints a test execution. """
-    log("Running", lvl)
     log("> log_file | {}".format(test_execution["log_file"]), lvl)
     log("> binary   | {}".format(test_execution["binary"]["name"]), lvl)
     log("> testcase | {}".format(test_execution["testcase"]["name"]), lvl)
@@ -38,7 +37,6 @@ def print_test_execution(test_execution, lvl=2, print_test_case=False):
             test_execution["testcase"]["inputs"],
             lvl
         )
-    new_line(lvl)
 
 def write_out_file_header(fil3, test_execution):
     """ Writes the header of a test execution to a file.

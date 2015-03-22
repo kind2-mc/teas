@@ -82,13 +82,18 @@ def run_tests_default():
     """ Returns the default value of the run_tests flag. """
     return _run_tests_default
 
-_max_proc_default = 4
+_max_proc_default = 1
 _max_proc = _max_proc_default
 
 def max_proc():
     """ Returns the maximum number of processes to run in
     parallel. """
     return _max_proc
+
+def sequential_run():
+    """ Returns true if we are running sequentially, i.e.
+    ``max_proc <= 1``. """
+    return _max_proc <= 1
 
 def set_max_proc(value):
     """ Sets the value of the max_proc flag. """
