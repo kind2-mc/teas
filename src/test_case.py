@@ -1,5 +1,6 @@
 """
-A test sequence is an ident, a type, and an input sequence.
+An input sequence is an ident, a type, and an input sequence.
+A test case in a sequence of input sequences.
 """
 
 import sys, csv
@@ -72,14 +73,15 @@ def print_input_seq(ident, typ3, vals, lvl=2):
     log("| type  | {}".format(typ3),  lvl)
     log("| seq   | {}".format(lib.string_join(vals, ", ")),  lvl)
 
-def print_test_case(seqs, lvl=2):
+def print_test_case(testcase, lvl=2):
     """ Prints a test case. """
     log("|-------|", lvl)
-    for seq in seqs:
+    for seq in testcase:
         print_input_seq(
             seq["ident"], seq["type"], seq["seq"], lvl
         )
         log("|-------|", lvl)
+
 
 def _check_input_seq_integrity(
     seq, length, seq_index, file_name, form4t
@@ -105,8 +107,6 @@ def _check_input_seq_integrity(
             seq_index,
             form4t
         )
-
-
 
 def _input_seq_of_csv_row(row, length, seq_index, file_name):
     """ Converts a row from a csv file to an input sequence.
@@ -153,7 +153,6 @@ def _input_seq_of_csv_row(row, length, seq_index, file_name):
 
     # Returning input sequence as a triplet.
     return { "ident": ident, "type": typ3, "seq": vals }
-
 
 def of_csv(file_name):
     """ Reads a csv file and extracts a test case out of it.
@@ -215,13 +214,12 @@ def of_csv(file_name):
             new_line(max_log)
 
 
-        # Returning final list of input sequences.
-        return reduced[2]
+        # Returning length and final list of input sequences.
+        return ( reduced[2], reduced[1] )
 
     # Whatever happens we should close the file we opened.
     finally:
         if fil3 is not None: fil3.close()
-
 
 # Maps extensions to test case creation functions.
 _extension_map = {
@@ -234,3 +232,19 @@ def of_file(path):
     for extension, create in _extension_map.iteritems():
         if path.endswith(extension):
             return create(path)
+
+def to_file(testcase, fil3, close_when_done=True):
+    """ Prints the input sequences of a test case between parens separated by
+    whitespaces. Closes the file when done if the flag says to do so. """
+    index = 0
+    length = testcase["length"]
+    inputs = testcase["inputs"]
+    def w(s): sys.stdout.write(s)
+    while index < length:
+        w( "({}".format(inputs[0]["seq"][index]) )
+        for inpuT in inputs[1:]:
+            w( ", {}".format(inpuT["seq"][index]) )
+        # In theory, python will translate the newline for windows.
+        w( ")\n" )
+        index += 1
+    if close_when_done: fil3.close()

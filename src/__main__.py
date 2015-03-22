@@ -75,21 +75,8 @@ def get_test_executions(files):
         new_line(max_log)
         test_context.print_test_context(context)
         new_line()
-
-        for testcase in context["testcases"]:
-            new_line(max_log)
-            name = testcase["name"]
-            path = testcase["file"]
-            frmt = testcase["format"]
-            log("Parsing test case \"{}\" from \"{}\" ({})".format(
-                name, path, frmt
-            ), max_log)
-            input_seq = test_case.of_file(path)
-            # Adding input sequence to the test case.
-            testcase["inputs"] = input_seq
-            test_case.print_test_case(input_seq, max_log)
-            new_line(max_log)
-
+        # Don't load the testcase itself, we do that right before running the
+        # test itself.
         test_contexts.append(context)
 
 
@@ -129,17 +116,6 @@ def get_test_executions(files):
         context_dir = iolib.join_path(
             flags.out_dir(), lib.file_name_of_path(fil3)
         )
-        # if os.path.isdir(context_dir):
-        #     warning("Log directory    \"{}\"".format(context_dir))
-        #     warning("for context file \"{}\"".format(fil3))
-        #     warning("already exists.")
-        #     new_line(1)
-        # else:
-        #     log("Creating log directory \"{}\"".format(context_dir),
-        #         max_log)
-        #     log("for context file       \"{}\".".format(fil3),
-        #         max_log)
-        #     new_line(max_log)
         try: iolib.mkdir(context_dir)
         except iolib.IOLibError as e:
             error("{}".format(e.msg))
@@ -155,19 +131,6 @@ def get_test_executions(files):
             binary_dir = os.path.join(
                 context_dir, lib.to_file_name(binary_name)
             )
-            # if os.path.isdir(binary_dir):
-            #     warning("Log directory \"{}\"".format(binary_dir))
-            #     warning("for binary    \"{}\"".format(
-            #         binary_name
-            #     ))
-            #     warning("already exists.")
-            #     new_line(1)
-            # else:
-            #     log("Creating log directory \"{}\"".format(binary_dir),
-            #         max_log)
-            #     log("for binary             \"{}\".".format(binary_name),
-            #         max_log)
-            #     new_line(max_log)
             try: iolib.mkdir(binary_dir)
             except iolib.IOLibError as e:
                 error("{}".format(e.msg))
@@ -212,8 +175,11 @@ def load_testcase(test_execution):
     testcase = test_execution["testcase"]
     if "inputs" not in testcase:
         testcase_path = testcase["file"]
-        input_seq = test_case.of_file(testcase_path)
+        (input_seq, length) = test_case.of_file(testcase_path)
         testcase["inputs"] = input_seq
+        testcase["length"] = length
+        test_case.print_test_case(input_seq, max_log)
+        new_line(max_log)
 
 def run_test(test_execution):
     """ Runs a test. """
@@ -227,19 +193,19 @@ def load_testcase_and_run(test_execution):
     except test_case.InputSeqError as e:
         return e
 
-def load_print_run(test_execution):
-    log("Loading test case...", 1)
-    load_testcase(test_execution)
-    log("Done, test execution structure is", 1)
-    execution.print_test_execution(
-        test_execution, lvl=max_log, print_test_case=False
-    )
-    sleeptime = test_execution["sleeptime"]
-    log("Pretending to work for {} seconds now.".format(sleeptime), 1)
-    run_test(test_execution)
-    time.sleep(sleeptime)
-    log("Slept for {} seconds, returning now.".format(sleeptime), 1)
-    new_line(1)
+# def load_print_run(test_execution):
+#     log("Loading test case...", 1)
+#     load_testcase(test_execution)
+#     log("Done, test execution structure is", 1)
+#     execution.print_test_execution(
+#         test_execution, lvl=max_log, print_test_case=False
+#     )
+#     sleeptime = test_execution["sleeptime"]
+#     log("Pretending to work for {} seconds now.".format(sleeptime), 1)
+#     run_test(test_execution)
+#     time.sleep(sleeptime)
+#     log("Slept for {} seconds, returning now.".format(sleeptime), 1)
+#     new_line(1)
 
 # Safety thing for parallelism.
 if __name__ == "__main__":
@@ -256,7 +222,7 @@ if __name__ == "__main__":
         if flags.sequential_run():
             log("Sequential run, {} jobs.".format(job_count))
             new_line()
-            map(load_print_run, test_executions)
+            map(load_testcase_and_run, test_executions)
 
         else:
             log("Running {} jobs in parallel with {} workers.".format(
