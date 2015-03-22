@@ -30,7 +30,19 @@ def init():
             )
             warning("")
             return False
-    files = filter( file_exists, all_files )
+
+    # Discarding duplicates and inexistant files.
+    def rm_duplicates_and_inexistant(li5t, path):
+        if path in li5t: return li5t
+        elif file_exists(path):
+            li5t.append(path)
+            return li5t
+        else: return li5t
+
+    # Cleaning list of files.
+    files = reduce( rm_duplicates_and_inexistant, all_files, [] )
+    # Restoring original order.
+    files.reverse()
 
     # Exiting if no file to run on.
     if len(files) < 1:
