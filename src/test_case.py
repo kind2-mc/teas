@@ -3,7 +3,7 @@ An input sequence is an ident, a type, and an input sequence.
 A test case in a sequence of input sequences.
 """
 
-import sys, csv
+import csv
 
 from stdout import error, log, new_line
 from excs import InputSeqError
@@ -232,19 +232,3 @@ def of_file(path):
     for extension, create in _extension_map.iteritems():
         if path.endswith(extension):
             return create(path)
-
-def to_file(testcase, fil3, close_when_done=True):
-    """ Prints the input sequences of a test case between parens separated by
-    whitespaces. Closes the file when done if the flag says to do so. """
-    index = 0
-    length = testcase["length"]
-    inputs = testcase["inputs"]
-    def w(s): sys.stdout.write(s)
-    while index < length:
-        w( "({}".format(inputs[0]["seq"][index]) )
-        for inpuT in inputs[1:]:
-            w( ", {}".format(inpuT["seq"][index]) )
-        # In theory, python will translate the newline for windows.
-        w( ")\n" )
-        index += 1
-    if close_when_done: fil3.close()

@@ -1,9 +1,10 @@
 """ Common io functions. """
 
-import os
+import os, sys
 
 import flags
 from excs import IOLibError
+from stdout import log, new_line
 
 # File system io-s.
 
@@ -23,6 +24,7 @@ def is_path_a_file(path):
     """ Checks if a path leads to an existing file. """
     if os.path.isfile(path): return True
     else: return False
+
 
 def is_legal_dir_path(path, if_there_do=None, if_not_there_do=None):
     """ Checks a path. Fails if path leads to a file, or if its parent
@@ -75,3 +77,48 @@ def mkdir(path):
             )
         )
 
+# Process io-s.
+
+def input_sequences_to_file(
+    inputs, length, fil3, close_when_done=True
+):
+    """ Prints the input sequences as comma separated values between parens,
+    separated by newlines. Closes the file when done if the flag says to do
+    so. """
+    index = 0
+    def w(s): log(s, flags.max_log_lvl())
+    while index < length:
+        w( "({}".format(inputs[0]["seq"][index]) )
+        for inpuT in inputs[1:]:
+            w( ", {}".format(inpuT["seq"][index]) )
+        # In theory, python will translate the newline for windows.
+        w( ")\n" )
+        index += 1
+    if close_when_done: fil3.close()
+
+def file_to_output_sequences(
+    outputs, length, fil3, close_when_done=True, data=None
+):
+    """ Reads the output sequences as comma separated values between parens,
+    separated by newlines. Returns when enough tuples of values specified
+    by ``output_sequence`` have been read.
+    Closes the file when done if the flag says to do so. """
+    tuple_count = 0
+    def update(tuple):
+        index = 0
+        while index < len(tuple):
+            outputs[index]["seq"].append(tuple[index])
+            index += 1
+    def update_of_string(s):
+        update(s.replace("(","").split(","))
+    data.reverse()
+    def r(): return data.pop()
+    out = ""
+    while tuple_count < length:
+        out = out + r()
+        temp = "".join(out.split()).split(")")
+        # Temp cannot be empty, this is safe.
+        out = temp.pop()
+        map( update_of_string, temp )
+        tuple_count += len(temp)
+    if close_when_done: fil3.close()

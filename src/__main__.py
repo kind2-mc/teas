@@ -142,7 +142,7 @@ def get_test_executions(files):
                 testcase_file = testcase["file"]
 
                 # Binary subdirectory.
-                testcase_log_file = "{}.res".format(os.path.join(
+                testcase_log_file = "{}.csv".format(iolib.join_path(
                     binary_dir, lib.file_name_of_path(testcase_file)
                 ))
                 if os.path.isfile(testcase_log_file):

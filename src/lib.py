@@ -37,3 +37,12 @@ def string_join(s, sep=" "):
 def to_file_name(s):
     """ Replaces whitespaces by underscores. """
     return string_join(string.split(s), "_")
+
+def oracle_log_file_of_log_path(log_path):
+    """ Returns a log file for an oracle output from the log path of a test
+    execution. """
+    if log_path.endswith(".csv"): clean_path = log_path[:-4]
+    else: clean_path = log_path
+    return "{}_{}.csv".format(
+        clean_path, "oracles"
+    )
