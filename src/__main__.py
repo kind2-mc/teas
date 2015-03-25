@@ -1,10 +1,11 @@
 """ Entry point. """
 
-import sys, os
+import sys, os, multiprocessing, time
 
 from stdout import new_line, log, error, warning, info
-import lib, iolib, options, flags, test_case, test_context, execution
-import multiprocessing, time
+import lib, iolib, options, flags
+import test_case, test_context
+import execution, breakdown
 
 max_log = flags.max_log_lvl()
 
@@ -145,6 +146,10 @@ def get_test_executions(files):
                 testcase_log_file = "{}.csv".format(iolib.join_path(
                     binary_dir, lib.file_name_of_path(testcase_file)
                 ))
+                breakdown_file = breakdown.get_file_path(
+                    context_dir, binary_name, testcase_file
+                )
+                log("breakdown file: {}".format(breakdown_file))
                 if os.path.isfile(testcase_log_file):
                     warning("Log file     \"{}\"".format(testcase_log_file))
                     warning("for binary   \"{}\"".format(binary_name))
@@ -162,7 +167,8 @@ def get_test_executions(files):
                 new_line(max_log)
 
                 test_execution = execution.mk_test_execution(
-                    name, fil3, testcase_log_file, binary, testcase, oracles
+                    name, fil3, testcase_log_file, breakdown_file,
+                    binary, testcase, oracles
                 )
 
                 test_executions.append(test_execution)

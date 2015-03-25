@@ -89,7 +89,10 @@ def _binary_of_xml(tree, count, fil3):
     return {
         "name": name,
         "cmd": _normalize_cmd(cmd),
-        "desc": tree.text
+        "desc": map(
+            (lambda s: s.strip()),
+            tree.text.split("\n")
+        )
     }
 
 def _global_flag_of_xml(tree, count, fil3):
@@ -121,7 +124,10 @@ def _oracle_of_xml(tree, count, fil3):
         "name": name,
         "cmd": _normalize_cmd(cmd),
         "global": glob,
-        "desc": tree.text
+        "desc": map(
+            (lambda s: s.strip()),
+            tree.text.split("\n")
+        )
     }
 
 def _testcase_of_xml(tree, count, fil3):
@@ -138,7 +144,10 @@ def _testcase_of_xml(tree, count, fil3):
         "name": name,
         "file": iolib.norm_path(path),
         "format": form4t,
-        "desc": tree.text
+        "desc": map(
+            (lambda s: s.strip()),
+            tree.text.split("\n")
+        )
     }
 
 def of_xml(path):

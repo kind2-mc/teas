@@ -58,8 +58,8 @@ def type_check(seqs):
             val_index += 1
             if not checker(val): raise TypeError(
                 ("expected value of type {} but found \"{}\" "
-                "(seq {}, value {})").format(
-                    typ3, val, seq_index, val_index
+                "(seq {} ({}), value {})").format(
+                    typ3, val, seq_index, seq["ident"], val_index
                 )
             )
 

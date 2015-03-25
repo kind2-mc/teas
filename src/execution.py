@@ -4,19 +4,20 @@ a binary, a testcase and some oracles. """
 
 import os, subprocess, random
 
-import lib, test_case, flags, iolib
+import lib, test_case, flags, iolib, outcome
 from stdout import log, warning, error, new_line
 
 max_log = flags.max_log_lvl()
 
 def mk_test_execution(
-    name, fil3, log_file, binary, testcase, oracles
+    name, fil3, log_file, breakdown_file, binary, testcase, oracles
 ):
     """ Builds a test execution dictionnary. """
     return {
         "name": name,
         "file": fil3,
         "log_file": log_file,
+        "breakdown_file": breakdown_file,
         "binary": binary,
         "testcase": testcase,
         "oracles": oracles
@@ -24,14 +25,15 @@ def mk_test_execution(
 
 def print_test_execution(test_execution, lvl=2, print_test_case=False):
     """ Prints a test execution. """
-    log("> log_file | {}".format(test_execution["log_file"]), lvl)
-    log("> binary   | {}".format(test_execution["binary"]["name"]), lvl)
-    log("> testcase | {}".format(test_execution["testcase"]["name"]), lvl)
+    log("> log_file  | {}".format(test_execution["log_file"]), lvl)
+    log("> breakdown | {}".format(test_execution["breakdown_file"]), lvl)
+    log("> binary    | {}".format(test_execution["binary"]["name"]), lvl)
+    log("> testcase  | {}".format(test_execution["testcase"]["name"]), lvl)
     oracles = test_execution["oracles"]
-    log("> oracles  | {}".format(oracles[0]["name"]), lvl)
+    log("> oracles   | {}".format(oracles[0]["name"]), lvl)
     if len(oracles) > 1:
         for oracle in oracles[1:]:
-            log("           | {}".format(oracle["name"]), lvl)
+            log("            | {}".format(oracle["name"]), lvl)
     if print_test_case:
         test_case.print_test_case(
             test_execution["testcase"]["inputs"],
@@ -88,8 +90,6 @@ def run(test_execution):
     oracle_proc3sses = []
 
     try:
-
-        log("Running, log file | {}.".format(file_name))
 
         # # Start subprocess with pipe on stdin, stdout and stderr.
         # proc3ss = subprocess.Popen(
@@ -196,7 +196,6 @@ def run(test_execution):
 
         # Open oracle output file in write mode.
         oracle_file_name = lib.oracle_log_file_of_log_path(file_name)
-        log("> oracle log file | {}.".format(oracle_file_name))
         oracle_fil3 = open(
             oracle_file_name,
             "w"
@@ -222,6 +221,8 @@ def run(test_execution):
                 oracle_fil3.write( ",{}".format(val) )
             oracle_fil3.write( "\n" )
         new_line(max_log)
+
+        outcome.generate_breakdown_and_outcome(test_execution)
 
 
 

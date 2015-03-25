@@ -35,17 +35,13 @@
         path="resources/csv/ok_3_lines_6_values.csv"
         name="test case of 6 values"
         format="csv">
-        <desc>
-            This is a test case of 6 values.
-        </desc>
+        This is a test case of 6 values.
     </testcase>
 
     <testcase
         path="resources/csv/ok_3_lines_8_values.csv"
         name="test case of 8 values"
         format="csv">
-        <desc>
-            This is a test case of 8 values.
-        </desc>
+        This is a test case of 8 values.
     </testcase>
 </data>
