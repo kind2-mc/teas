@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+<data name="context1">
+    <binary name="binary_1" cmd="path/to/binary1 --run">
+        Description of binary1.
+    </binary>
+
+    <binary name="binary_2" cmd="path/to/binary2 --run">
+        Description of binary2.
+    </binary>
+
+    <oracle
+        global="true"
+        cmd="path/to/global/oracle --run"
+        name="global_oracle_name">
+        Description of the global oracle.
+    </oracle>
+
+    <oracle
+        cmd="path/to/oracle1 --run"
+        name="oracle1_name">
+        Description of oracle1.
+    </oracle>
+
+    <oracle
+        cmd="path/to/oracle2 --run"
+        name="oracle2_name">
+        Description of oracle2.
+    </oracle>
+
+    <testcase
+        path="resources/csv/ok_3_lines_6_values.csv"
+        name="test case of 6 values"
+        format="csv">
+        This is a test case of 6 values.
+    </testcase>
+
+    <testcase
+        path="resources/csv/ok_3_lines_8_values.csv"
+        name="test case of 8 values"
+        format="csv">
+        This is a test case of 8 values.
+    </testcase>
+
+    <testcase
+        path="resources/csv/ok_3_lines_6_values.csv"
+        name="test case of 6 values"
+        format="csv">
+        This is a test case of 6 values.
+    </testcase>
+
+    <testcase
+        path="resources/csv/ok_3_lines_6_values.csv"
+        name="test case of 6 values"
+        format="csv">
+        This is a test case of 6 values.
+    </testcase>
+</data>
