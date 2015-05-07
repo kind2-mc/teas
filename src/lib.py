@@ -1,6 +1,6 @@
 """ Basic helper things. """
 
-import os, string
+import os, string, shlex
 
 def bool_of_string(s):
     """ Converts a string to a bool, raises a ``ValueError`` in case of

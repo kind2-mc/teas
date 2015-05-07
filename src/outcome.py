@@ -168,13 +168,13 @@ def generate_breakdown_and_outcome(testex_result):
 
         w("## Run details\n\n")
 
-        w("As specified in `{}`:\n\n".format( context_file ))
+        w("As specified in `{}`:\n".format( context_file ))
 
-        w("* binary \"{}\": `{}`\n\n".format( binary_name, binary_cmd ))
+        w("* binary \"{}\": `{}`\n".format( binary_name, binary_cmd ))
         for line in binary_desc: w( "  {}\n".format(line) )
         w("\n")
 
-        w("* testcase `{}`\n\n".format( testcase["file"] ))
+        w("* testcase `{}`\n".format( testcase["file"] ))
         for line in testcase["desc"]: w( "  {}\n".format(line) )
         w("\n")
 

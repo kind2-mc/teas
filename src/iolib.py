@@ -1,5 +1,6 @@
 """ Common io functions. """
 
+import shlex
 import os, sys
 
 import flags
@@ -9,7 +10,7 @@ from stdout import log, new_line
 # File system io-s.
 
 def norm_path(path):
-    """ Retruns a normalized path. """
+    """ Returns a normalized path. """
     return os.path.normpath(path)
 
 def join_path(path1, path2):
@@ -79,6 +80,12 @@ def mkdir(path):
 
 # Process io-s.
 
+def split_cmd(cmd):
+    """Splits a command in a list of strings."""
+    split = shlex.split(cmd)
+    split[0] = norm_path(split[0])
+    return split
+
 def input_sequences_to_file(
     inputs, length, fil3, close_when_done=True
 ):
@@ -122,3 +129,17 @@ def file_to_output_sequences(
         map( update_of_string, temp )
         tuple_count += len(temp)
     if close_when_done: fil3.close()
+
+# Parsing stuff.
+
+def bool_of_str(s):
+    """Converts a string to a boolean."""
+    if s in ["true","True"]:
+        return True
+    elif s in ["false","False"]:
+        return False
+    else: raise TypeError(
+        "expected boolean but found \"{}\"".format(s)
+    )
+
+
