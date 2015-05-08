@@ -46,6 +46,8 @@ def _find_option_triplet(option):
         # Return first match.
         if option in triplet[0]: return triplet
 
+_help_flags = ["-h", "--help"]
+
 def parse_arguments():
     """ Parses the arguments and calls relevant actions. """
 
@@ -92,6 +94,12 @@ def parse_arguments():
         new_line(1)
         sys.exit(1)
 
+    for f in _help_flags:
+        if f in args:
+            _print_help()
+            new_line(1)
+            sys.exit(0)
+
     args = handle_options(args)
 
     return args
@@ -118,7 +126,7 @@ def _add_option_header(lines):
 
 # Help option.
 _add_option(
-    ["-h", "--help"],
+    _help_flags,
     ["prints the help message and exits"],
     lambda tail: _print_help_exit(0)
 )
