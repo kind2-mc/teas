@@ -5,7 +5,8 @@ Module for the oracle of a system. An oracle contains
   boolean indicating if the output corresponds to a global mode.
 """
 
-from iolib import bool_of_str, norm_path
+from lib import bool_of_string
+from iolib import norm_path
 from stdout import log, error, new_line
 
 import flags
@@ -51,7 +52,7 @@ def of_xml(xml_tree):
       if "global" not in leaf.attrib.keys(): raise Exception(
         "illegal oracle: some outputs miss the global flag"
       )
-      return ( leaf.text, bool_of_str(leaf.attrib["global"]) )
+      return ( leaf.text, bool_of_string(leaf.attrib["global"]) )
     outputs = map(extract, oracle.findall("output"))
     return {"path": path, "out": outputs}
 
@@ -69,7 +70,7 @@ def check_values(t, values):
 
   # Inspecting modes and globals.
   for i in range(0, len(outs)):
-    val = bool_of_str(values[i])
+    val = bool_of_string(values[i])
     glob = outs[i][1]
     if not glob:
       if val: modes = True
@@ -80,3 +81,4 @@ def check_values(t, values):
     return failure.mk(modes, globs)
   else:
     return None
+

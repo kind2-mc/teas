@@ -32,6 +32,12 @@ def mk(name, cmd):
     "cmd": iolib.split_cmd(cmd)
   }
 
+def of_xml(tree):
+  """Creates a binary from an xml tree."""
+  name = tree.attrib["name"]
+  cmd = tree.text
+  return mk(name, cmd)
+
 def dummy():
   """Creates a dummy binary."""
   return mk("dummy", "dummy")

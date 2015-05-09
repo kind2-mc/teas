@@ -9,12 +9,15 @@ A test execution contains
 
 import os, subprocess
 
-from stdout import log
+from stdout import log, new_line
 import binary as b
 import oracle as o
 import values as v
 import testcase as tc
 import failure as f
+import flags
+
+max_log = flags.max_log_lvl()
 
 def binary(t):
   """The binary of a test execution."""
@@ -107,6 +110,7 @@ def run(t):
   ora_proc = None
 
   try:
+
     bin_proc = subprocess.Popen(
       b.cmd(binary(t)),
       stdin=subprocess.PIPE,
@@ -121,17 +125,20 @@ def run(t):
     )
 
     # Loading test case.
-    testcase = tc.load_values(testcase(t))
-    max_k = tc.length(testcase) - 1
+    log( "    loading test case \"{}\"".format(tc.name(testcase(t))), max_log )
+    test_case = tc.load_values(testcase(t))
+    max_k = len( v.seq(test_case) ) - 1
 
     # Result.
     res = None
 
     # Feeding binary, logging output, feeding oracle, logging output.
-    for k in range(0, mak_k):
+    for k in range(0, max_k):
+
+      log( "    step {}".format(k), max_log )
 
       # Creating binary input values.
-      values = v.seq(testcase)[k]
+      values = v.seq(test_case)[k]
       values = reduce(
         lambda s,v: s + " " + v,
         values[1:],
@@ -139,12 +146,12 @@ def run(t):
       )
 
       # Feeding binary.
-      log( "bin in:  {}".format(values) )
-      bin_proc.stdin.write( values )
+      log( "      bin in:  {}".format(values), max_log )
+      bin_proc.stdin.write( values + "\n" )
 
       # Retrieving binary output.
-      output = bin_proc.stdout.read()
-      log( "bin out: {}".format(output) )
+      output = bin_proc.stdout.readline().strip()
+      log( "      bin out: {}".format(output), max_log )
       out_values = output.split(" ")
       write_out_seq( out_values, file_bin )
 
@@ -152,20 +159,18 @@ def run(t):
       values = values + " " + output
 
       # Feeding oracle.
-      log( "ora in:  {}".format(values) )
-      ora_proc.stdin.write( values )
+      log( "      ora in:  {}".format(values), max_log )
+      ora_proc.stdin.write( values + "\n" )
 
       # Retrieving oracle output.
-      output = ora_proc.stdout.read()
-      log( "ora out: {}".format(output) )
+      output = ora_proc.stdout.readline().strip()
+      log( "      ora out: {}".format(output), max_log )
       out_values = output.split(" ")
       write_out_seq( out_values, file_ora )
 
-      log( "" )
-
       # Checking the oracle output.
-      failure = o.check_values(oracle(t))
-      log( "oracle check: {}".format(failure) )
+      failure = o.check_values(oracle(t), out_values)
+      log( "      oracle check: {}".format(failure), max_log )
       if failure != None:
         f.add_at(failure, k)
         f.add_testcase(failure, testcase(t))
@@ -173,15 +178,22 @@ def run(t):
         res = failure
         break
 
-    log( "done" )
+    log( "    done", max_log )
+    new_line( max_log )
 
   finally:
     # Closing log files.
     file_bin.close()
     file_ora.close()
     # Closing processes if necessary.
-    if bin_proc != None: bin_proc.close()
-    if ora_proc != None: ora_proc.close()
+    if bin_proc != None:
+      bin_proc.stdin.close()
+      bin_proc.stdout.close()
+      bin_proc.stderr.close()
+    if ora_proc != None:
+      ora_proc.stdin.close()
+      ora_proc.stdout.close()
+      ora_proc.stderr.close()
 
   return res
 

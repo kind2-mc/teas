@@ -5,8 +5,8 @@ import os, string, shlex
 def bool_of_string(s):
     """ Converts a string to a bool, raises a ``ValueError`` in case of
     failure. """
-    if s in [ "t", "T", "true", "True" ]: return True
-    elif s in [ "f", "F", "false", "False"]: return False
+    if s in [ "1", "t", "T", "true", "True" ]: return True
+    elif s in [ "0", "f", "F", "false", "False"]: return False
     else: raise ValueError(
         "expected bool but found \"{}\"".format(s)
     )
@@ -16,7 +16,7 @@ def int_of_string(s):
     failure. """
     try: return int(s)
     except ValueError: raise ValueError(
-        "Expected integer but found \"{}\"".format(s)
+        "xpected integer but found \"{}\"".format(s)
     )
 
 def file_name_of_path(path):
