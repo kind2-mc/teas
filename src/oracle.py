@@ -59,26 +59,31 @@ def of_xml(xml_tree):
 def check_values(t, values):
   """Checks if the input values for the oracle makes the contract it
   corresponds to evaluate to true."""
-  if len(outputs(t)) != len(values): raise Exception(
+  if 2 * len(outputs(t)) != len(values): raise Exception(
     "dimension mismatch between oracle signature and the values to check"
   )
   outs = outputs(t)
-  # Will be set to true if at least one mode evaluate to true.
-  modes = False
-  # The global contracts evaluating to false.
+  # Modes the implication of which evaluates to false.
+  modes = []
+  # The global contracts the ensure of which evaluates to false.
   globs = []
+  # Will be set to true if at least one mode evaluate to true.
+  mode_reqs = False
+  # The global contracts the requirement of which evaluates to false.
+  glob_reqs = []
 
   # Inspecting modes and globals.
   for i in range(0, len(outs)):
-    val = bool_of_string(values[i])
+    two_i = 2 * i
+    fst = bool_of_string(values[two_i])
+    snd = bool_of_string(values[two_i+1])
     glob = outs[i][1]
     if not glob:
-      if val: modes = True
+      if fst: mode_reqs = True
+      if not snd: modes.append(i)
     else:
-      if not val: globs.append(i)
+      # if not fst: glob_reqs.append(i)
+      if not snd: globs.append(i)
 
-  if len(globs) > 0 or not modes:
-    return failure.mk(modes, globs)
-  else:
-    return None
+  return failure.mk(modes, globs, mode_reqs, glob_reqs)
 

@@ -170,13 +170,15 @@ def run(t):
 
       # Checking the oracle output.
       failure = o.check_values(oracle(t), out_values)
-      log( "      oracle check: {}".format(failure), max_log )
       if failure != None:
+        log( "      oracle check: {}".format(failure), max_log )
         f.add_at(failure, k)
         f.add_testcase(failure, testcase(t))
-        f.pprint(failure)
+        f.pprint("    ", failure)
         res = failure
         break
+      else:
+        log( "      oracle check: ok", max_log )
 
     log( "    done", max_log )
     new_line( max_log )
