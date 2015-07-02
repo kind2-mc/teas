@@ -58,7 +58,7 @@ def pprint(prefix, t, lvl=2):
     log( "{}| global_reqs: {}".format(prefix, global_reqs(t)), lvl )
   if testcase(t) != None:
     log( "{}| for testcase:".format(prefix), lvl )
-    tc.pprint( "{}| | ".format(prefix), testcase(t) )
+    tc.pprint( "{}| | ".format(prefix), testcase(t), lvl )
 
 def mk(modes, glob4ls, mode_reqs, glob4l_reqs):
   """Creates a failure with no ``at`` nor ``testcase`` field."""

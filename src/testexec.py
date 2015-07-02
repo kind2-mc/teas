@@ -99,11 +99,11 @@ def write_out_seq(values, fil3):
 def run(t):
   """Runs a test execution."""
   # Opening log files
-  file_bin = open( binlog(t), "w" )
-  file_ora = open( oralog(t), "w" )
+  # file_bin = open( binlog(t), "w" )
+  # file_ora = open( oralog(t), "w" )
 
   # Writing headers.
-  write_log_header(t, file_bin, file_ora)
+  # write_log_header(t, file_bin, file_ora)
 
   # Creating processes.
   bin_proc = None
@@ -153,7 +153,7 @@ def run(t):
       output = bin_proc.stdout.readline().strip()
       log( "      bin out: {}".format(output), max_log )
       out_values = output.split(" ")
-      write_out_seq( out_values, file_bin )
+      # write_out_seq( out_values, file_bin )
 
       # Creating oracle input values.
       values = values + " " + output
@@ -166,15 +166,14 @@ def run(t):
       output = ora_proc.stdout.readline().strip()
       log( "      ora out: {}".format(output), max_log )
       out_values = output.split(" ")
-      write_out_seq( out_values, file_ora )
+      # write_out_seq( out_values, file_ora )
 
       # Checking the oracle output.
       failure = o.check_values(oracle(t), out_values)
       if failure != None:
-        log( "      oracle check: {}".format(failure), max_log )
         f.add_at(failure, k)
         f.add_testcase(failure, testcase(t))
-        f.pprint("    ", failure)
+        f.pprint("    ", failure, max_log)
         res = failure
         break
       else:
@@ -185,8 +184,8 @@ def run(t):
 
   finally:
     # Closing log files.
-    file_bin.close()
-    file_ora.close()
+    # file_bin.close()
+    # file_ora.close()
     # Closing processes if necessary.
     if bin_proc != None:
       bin_proc.stdin.close()
@@ -197,5 +196,5 @@ def run(t):
       ora_proc.stdout.close()
       ora_proc.stderr.close()
 
-  return res
+  return res == None
 

@@ -80,10 +80,10 @@ def check_values(t, values):
     glob = outs[i][1]
     if not glob:
       if fst: mode_reqs = True
-      if not snd: modes.append(i)
+      if not snd: modes.append(outputs(t)[i])
     else:
       # if not fst: glob_reqs.append(i)
-      if not snd: globs.append(i)
+      if not snd: globs.append(outputs(t)[i])
 
   return failure.mk(modes, globs, mode_reqs, glob_reqs)
 

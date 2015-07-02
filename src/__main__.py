@@ -108,7 +108,8 @@ def load_testcase(test_execution):
 
 def run_test(test_execution):
   """ Runs a test. """
-  execution.run(test_execution)
+  ok = execution.run(test_execution)
+  return ok
 
 # Safety thing for parallelism.
 if __name__ == "__main__":
@@ -132,7 +133,7 @@ if __name__ == "__main__":
       log( "  {} test sets".format(len(ctxt.tests(test_context))) )
       log( "  on binary" )
       binary.pprint("    ", bin4ry)
-      new_line()
+      new_line(max_log)
 
       oracle = ctxt.oracle(test_context)
 
@@ -144,7 +145,7 @@ if __name__ == "__main__":
         log( "Loading test set {}".format(test_set) )
         ts = testset.of_file(test_set)
         log( "Done, setting up test set \"{}\".".format(testset.name(ts)) )
-        new_line()
+        new_line(max_log)
 
         job_count = len( testset.tests(ts) )
 
@@ -152,17 +153,41 @@ if __name__ == "__main__":
 
           if flags.sequential_run():
             log("  Sequential run, {} jobs.".format(job_count))
-            map(run_test, testset.tests(ts))
-            log("  Done.")
+            res_list = map(run_test, testset.tests(ts))
+            total = len(res_list)
+            successes = len( [ok for ok in res_list if ok] )
+            failures = total - successes
+            width = len(str(total))
+            log("  Done on {} tests:".format(total))
+            log("    > \033[32m{0:>{width}} test passed\033[0m".format(
+              successes, width=width)
+            )
+            if failures > 0:
+              log("    > \033[31m{0:>{width}} test failed\033[0m".format(
+                failures, width=width)
+              )
 
           else:
             log("  Running {} jobs in parallel with {} workers.".format(
               job_count, flags.max_proc()
             ))
-            new_line()
+            new_line(max_log)
             p00l = multiprocessing.Pool(flags.max_proc())
-            p00l.map(load_testcase_and_run, test_executions)
-            log("  Done.")
+            res_list = p00l.map(run_test, testset.tests(ts))
+            total = len(res_list)
+            successes = len( [ok for ok in res_list if ok] )
+            failures = total - successes
+            width = len(str(total))
+            log("  Done on {} tests:".format(total))
+            log("    > \033[32m{0:>{width}} test passed\033[0m".format(
+              successes, width=width)
+            )
+            if failures > 0:
+              log("    > \033[31m{0:>{width}} test failed\033[0m".format(
+                failures, width=width)
+              )
+          new_line()
+          new_line()
 
 
   new_line()
