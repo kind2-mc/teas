@@ -46,6 +46,8 @@ def _find_option_triplet(option):
         # Return first match.
         if option in triplet[0]: return triplet
 
+_help_flags = ["-h", "--help"]
+
 def parse_arguments():
     """ Parses the arguments and calls relevant actions. """
 
@@ -92,6 +94,12 @@ def parse_arguments():
         new_line(1)
         sys.exit(1)
 
+    for f in _help_flags:
+        if f in args:
+            _print_help()
+            new_line(1)
+            sys.exit(0)
+
     args = handle_options(args)
 
     return args
@@ -118,7 +126,7 @@ def _add_option_header(lines):
 
 # Help option.
 _add_option(
-    ["-h", "--help"],
+    _help_flags,
     ["prints the help message and exits"],
     lambda tail: _print_help_exit(0)
 )
@@ -162,6 +170,41 @@ _add_option(
 _add_option_header((
     ["Test context construction options."]
 ))
+
+# Adding binaries option.
+def _add_binary_action(tail):
+    if len(tail) < 3: raise ValueError(
+        "expected three arguments but found {}".format(len(tail))
+    )
+    fst = tail[0]
+    snd = tail[1]
+    thd = tail[2]
+    triple = fst, snd, thd
+    if fst.startswith("-"): raise ValueError(
+        "expected binary name but found \"{}\"".format(fst)
+    )
+    if snd.startswith("-"): raise ValueError(
+        "expected binary command but found \"{}\"".format(snd)
+    )
+    if thd.startswith("-"): raise ValueError(
+        "expected test context file but found \"{}\"".format(thd)
+    )
+    if not os.path.isfile(thd): raise ValueError(
+        "test context file \"{}\" does not exist".format(thd)
+    )
+    flags.add_binary_to_add(triple)
+    return tail[3:]
+_add_option(
+    ["--add_bin"],
+    [
+        "> of n cmd ctxt (default {})".format(
+            flags.binaries_to_add_default()
+        ),
+        "will add the binary with name \"n\", command \"cmd\" to the test",
+        "context in file \"ctxt\""
+    ],
+    _add_binary_action
+)
 
 # Test case type-check option.
 def _type_check_action(tail):

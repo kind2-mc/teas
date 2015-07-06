@@ -64,6 +64,29 @@ def type_check_test_cases_default():
     return _type_check_test_cases_default
 
 
+
+# Adding binaries.
+
+_binaries_to_add_default = []
+_binaries_to_add = _binaries_to_add_default
+
+def binaries_to_add():
+    """ Returns the list of binaries to add to test contexts. The elements of
+    the list are triples containing the name of the binary, the command for
+    the binary, and the test context file to add it to. """
+    return _binaries_to_add
+def set_binaries_to_add(value):
+    """ Sets the list of binaries to add to test contexts. """
+    global _binaries_to_add
+    _binaries_to_add = value
+def add_binary_to_add(triple):
+    """ Adds a binary to add triple to the list. """
+    global _binaries_to_add
+    _binaries_to_add.append(triple)
+def binaries_to_add_default():
+    """ The default value of the list of binaries to add to test contexts. """
+    return _binaries_to_add_default
+
 # Test execution things.
 
 _run_tests_default = True

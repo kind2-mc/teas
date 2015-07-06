@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<data system="PFS">
+
+  <oracle path="oracle/PFS_oracle">
+    <output global="true">global</output>
+    <output global="false">inhibited_R2_R3</output>
+    <output global="false">unchanged_nop_R5</output>
+    <output global="false">change_R3_Rise</output>
+    <output global="false">change_R3_Fall</output>
+  </oracle>
+  
+  <tests>unit-tests.xml</tests>
+
+</data>
+
