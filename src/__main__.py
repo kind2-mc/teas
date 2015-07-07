@@ -1,6 +1,6 @@
 """ Entry point. """
 
-import sys, os, multiprocessing, time
+import sys, os, multiprocessing, time, distutils.spawn
 
 from stdout import new_line, log, error, warning, info
 import lib, iolib, options, flags
@@ -56,6 +56,22 @@ def init():
             n, cmd, path
         )
     )
+    if not file_exists(path):
+      error(
+        "cannot add binary \"{}\" to inexistent test context \"{}\"".format(
+          n, path
+        )
+      )
+      new_line(0)
+      sys.exit(2)
+    elif distutils.spawn.find_executable(cmd) == None:
+      error(
+        "command \"{}\" for binary \"{}\" is undefined".format(
+          n, cmd
+        )
+      )
+      new_line(0)
+      sys.exit(2)
     ctxt.add_binary(path, bina.mk(n, cmd))
     log("Done.")
     new_line()
