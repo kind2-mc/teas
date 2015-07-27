@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- XML schema for the TestEAS test execution engine. Top file. !-->
+
+<xs:schema
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  elementFormDefault="qualified"
+  xmlns:vc="http://www.w3.org/2007/XMLSchema-versioning"
+  vc:minVersion="1.0"
+>
+
+<!-- Oracles. -->
+
+<xs:complexType name="output">
+  <xs:attribute name="name" type="xs:string"/>
+</xs:complexType>
+
+<xs:complexType name="oracleMode">
+  <xs:sequence>
+    <xs:element
+      name="require" type="output" minOccurs="1" maxOccurs="unbounded"/>
+    <xs:element
+      name="ensure" type="output" minOccurs="1" maxOccurs="unbounded"/>
+  </xs:sequence>
+  <xs:attribute name="global" type="xs:boolean" use="required"/>
+  <xs:attribute name="name" type="xs:string" use="required"/>
+</xs:complexType>
+
+<xs:complexType name="oracleFull">
+  <xs:sequence>
+    <xs:element name="output" type="oracleMode"
+      minOccurs="1" maxOccurs="unbounded"/>
+  </xs:sequence>
+  <xs:attribute name="path" type="xs:string" use="required"/>
+</xs:complexType>
+
+<!-- Root node. -->
+
+<xs:element name="data">
+  <xs:complexType>
+    <xs:sequence>
+      <xs:element name="oracle" type="oracleFull"
+        minOccurs="1" maxOccurs="unbounded"/>
+      <xs:element name="tests" type="xs:string"
+        minOccurs="1" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute name="system" type="xs:string" use="required"/>
+  </xs:complexType>
+</xs:element>
+
+</xs:schema>
