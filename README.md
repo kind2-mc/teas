@@ -1,4 +1,4 @@
-# testeas
+# TestEAS
 
 Test Execution and Analysis System
 
