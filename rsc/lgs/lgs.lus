@@ -1,0 +1,581 @@
+include "spec.lus"
+
+const c = 1 ;
+const c_4 = c * 4 ;
+const c_5 = c * 5 ;
+const c_8 = c * 8 ;
+const c_12 = c * 12 ;
+const c_16 = c * 16 ;
+const c_20 = c * 20 ;
+const c_24 = c * 24 ;
+const c_32 = c * 32 ;
+const c_100 = c * 100 ;
+const c_150 = c * 150 ;
+const c_200 = c * 200 ;
+
+const scenario_time = 13 ;
+
+node count_when (
+  in, wh3n: bool ;
+) returns (
+  out: int ;
+) ;
+let
+  out = if in then (
+    (if wh3n then 1 else 0) + (0 -> pre out)
+  ) else 0 ;
+tel
+
+node has_been_true_reset (in, reset: bool) returns (out: bool) ;
+let
+  out = if reset then false else in or (false -> pre out) ;
+tel
+
+node end_delay_last (
+  time_base, start : bool ;
+  time : int ;
+) returns (
+  ended : bool ;
+) ;
+var
+  x : int ;
+let
+  x = time -> if start then time else (
+    if pre x > 0 and time_base then pre x - 1 else pre x
+  ) ;
+  ended = x = 0 ;
+tel
+
+
+-------------------------------------------------------------------------------
+-- Timed automata
+-------------------------------------------------------------------------------
+
+node timer (
+  time_base, set, condition : bool ; delay : int ;
+) returns (
+  end : bool
+) ;
+var
+  remains : int ;
+let
+  end = false -> remains = 0 and not (pre (remains) = 0);
+  remains = delay -> if set then delay else (
+    if condition and time_base then pre (remains) - 1 else pre remains
+  ) ;
+tel
+
+node end_stay (
+  time_base, state : bool; time_stay : int ;
+) returns (
+  go_out : bool
+) ;
+let
+  go_out = state and timer(
+    time_base, state and not (false -> pre state), state, time_stay
+  ) ;
+tel
+
+node state (
+  init, condition_in, condition_out : bool ;
+) returns (
+  current_in : bool
+) ;
+let
+  current_in = init -> pre (
+    (current_in or condition_in) and
+    (not condition_out)
+  ) ;
+tel
+
+-------------------------------------------------------------------------------
+-- Analogical switch - time given
+-------------------------------------------------------------------------------
+-- the time base is the third of 0.1 second
+-------------------------------------------------------------------------------
+
+node analogical_switch_all_outputs (
+  time_base, handle_up, handle_down : bool ;
+) returns (
+  x : int ; open, closing, opening, closed : bool
+) ;
+var
+  handle_move : bool ;
+let
+
+  handle_move = handle_up or handle_down;
+
+  open = true -> (pre (open) or pre (opening) and (pre (x) = 1))
+  and not handle_move;
+
+  closing = false -> pre (closing) and not (pre (x) = 1)
+  or ((pre (opening) or pre (open)) and handle_move);
+
+  closed = false -> pre (closed) and (handle_move or not (pre (x) = 1))
+  or pre (closing) and (pre (x) = 1);
+
+  opening = false -> (pre (opening) and not (pre (x) = 1)
+  or pre (closed) and (pre (x) = 1)) and not handle_move;
+
+  x = 0 -> if open then 0 else (
+    if closing and (pre open or pre opening) then c_8 - 20 * pre(x)
+    else if closed and (pre closing or handle_move) then c_200
+    else if opening and pre closed then c_12
+    else if pre x - 1 > 0 and time_base then pre x - 1 else pre x
+  ) ;
+tel
+
+node analogical_switch (time_base, handle_up, handle_down : bool)
+returns (closed : bool);
+var x : int; open, closing, opening : bool;
+
+let
+
+  (x, open, closing, opening, closed) = analogical_switch_all_outputs(
+    time_base, handle_up, handle_down
+  ) ;
+
+tel
+
+node analogical_switch_formal (time_base, handle_up, handle_down : bool)
+returns (closed : bool);
+var handle_move, end_delay, open, opening, closing : bool;
+
+let
+
+  handle_move = handle_up or handle_down;
+
+  open = state (true, opening and end_delay, handle_move);
+
+  closing = state (false, (open or opening) and handle_move,
+                   closing and end_delay);
+
+  closed = state (false, closing and end_delay or closed and handle_move,
+                  closed and end_delay);
+
+  opening = state (false, closed and end_delay, opening and end_delay
+                   or handle_move);
+  
+  end_delay =  end_stay (time_base, opening, c_12) or
+               end_stay (time_base, closing, c_8) or
+               timer (time_base, closed and true -> (not pre closed) or
+                      closed and handle_move, closed, c_200);
+tel
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+-- Cylinders - time given
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+node cylinder_all_outputs(
+  time_base, pressure_up, pressure_down, i : bool ;
+  -- i is true if the initial position is up
+  time_unlock_down, time_down_to_up, time_lock_up, time_unlock_up,
+  time_up_to_down, time_lock_down : int ;
+) returns (
+  locked_up, locked_down, unlocking_down, down_to_up, locking_up,
+  unlocking_up, up_to_down, locking_down : bool ; x : int ;
+) ;
+let
+
+  locked_down = locking_down and x = 0;
+  locked_up = locking_up and x = 0;
+
+  unlocking_down = false -> pre (locking_down) and pressure_up
+  or pre (unlocking_down) and not pressure_down and (not pressure_up
+                                                     or pre (x) > 1);
+
+  down_to_up = false -> pre (unlocking_down) and pressure_up and pre (x) = 1
+  or pre (up_to_down) and pressure_up
+  or pre (down_to_up) and not pressure_down and (not pressure_up
+                                                 or pre (x) > 1);
+   
+  locking_up = i -> pre (down_to_up) and pressure_up and pre (x) = 1
+  or pre (unlocking_up) and pressure_up
+  or pre (locking_up) and not pressure_down;
+
+  unlocking_up = false -> pre (locking_up) and pressure_down
+  or pre (unlocking_up) and not pressure_up and (not pressure_down
+                                                     or pre (x) > 1);
+
+  up_to_down = false -> pre (unlocking_up) and pressure_down and pre (x) = 1
+  or pre (down_to_up) and pressure_down
+  or pre (up_to_down) and not pressure_up and (not pressure_down
+                                               or pre (x) > 1);
+
+  locking_down = not i -> pre (up_to_down) and pressure_down and pre (x) = 1
+  or pre (unlocking_down) and pressure_down
+  or pre (locking_down) and not pressure_up;
+
+  x = 0 ->
+    if unlocking_down and  pre (locking_down)
+         then time_unlock_down       
+    else if down_to_up and  (pre (unlocking_down) or pre (up_to_down))
+         then time_down_to_up
+    else if locking_up and  (pre (down_to_up) or pre (unlocking_up))
+         then time_lock_up
+    else if unlocking_up and pre (locking_up)
+         then time_unlock_up   
+    else if up_to_down and (pre (unlocking_up) or pre (down_to_up))
+         then time_up_to_down
+    else if locking_down and  (pre (up_to_down) or pre (unlocking_down))
+         then time_lock_down
+    else if (pressure_down and (unlocking_up or up_to_down or locking_down)
+         or pressure_up and (unlocking_down or down_to_up or locking_up)) and
+         pre (x) > 0 and time_base
+         then pre (x) - 1 
+    else pre (x);
+
+tel
+
+-- Less outputs
+
+node cylinder(
+  time_base, pressure_up, pressure_down, init_up : bool;
+  time_unlock_down, time_down_to_up, time_lock_up,
+  time_unlock_up, time_up_to_down, time_lock_down : int
+) returns (
+  locked_up, locked_down : bool
+) ;
+var
+  unlocking_down, down_to_up, locking_up,
+  unlocking_up, up_to_down, locking_down : bool ;
+  x : int ;
+let
+  (
+    locked_up, locked_down, unlocking_down, down_to_up, locking_up,
+    unlocking_up, up_to_down, locking_down, x
+  ) = cylinder_all_outputs(
+    time_base, pressure_up, pressure_down, init_up, time_unlock_down,
+    time_down_to_up, time_lock_up, time_unlock_up, time_up_to_down,
+    time_lock_down
+  ) ;
+  --| With assertion, property holds.
+  -- assert not (pressure_up and pressure_down) ;
+  -- (*%PROPERTY 
+  --   ( (not pressure_up) and (not pressure_down) ) => (
+  --     true -> (
+  --       (locked_up = pre locked_up)
+  --     ) and (
+  --       (locked_down = pre locked_down)
+  --     )
+  --   ) ;
+  -- *)
+tel
+
+node cylinder_formal (time_base, pressure_up, pressure_down, i : bool;
+                      -- i is true if the initial position is up
+                      time_unlock_down, time_down_to_up,
+                      time_lock_up, time_unlock_up,
+                      time_up_to_down, time_lock_down : int)
+returns (locked_up, locked_down : bool);
+var unlocking_down, down_to_up, locking_up, unlocking_up, up_to_down,
+    locking_down, end_delay : bool;
+
+let
+
+  locked_down = locking_down and end_delay;
+  locked_up = locking_up and end_delay;
+
+  unlocking_down = false -> pre (locking_down) and pressure_up
+  or pre (unlocking_down) and not pressure_down and (not pressure_up
+                                                     or not end_delay);
+
+  down_to_up = false -> pre (unlocking_down) and pressure_up and end_delay
+  or pre (up_to_down) and pressure_up
+  or pre (down_to_up) and not pressure_down and (not pressure_up
+                                                   or not end_delay);
+   
+  locking_up = i -> pre (down_to_up) and pressure_up and end_delay
+  or pre (unlocking_up) and pressure_up
+  or pre (locking_up) and not pressure_down;
+
+  unlocking_up = false -> pre (locking_up) and pressure_down
+  or pre (unlocking_up) and not pressure_up and (not pressure_down
+                                                     or not end_delay);
+
+  up_to_down = false -> pre (unlocking_up) and pressure_down and end_delay
+  or pre (down_to_up) and pressure_down
+  or pre (up_to_down) and not pressure_up and (not pressure_down
+                                                   or not end_delay);
+
+  locking_down = not i -> pre (up_to_down) and pressure_down and end_delay
+  or pre (unlocking_down) and pressure_down
+  or pre (locking_down) and not pressure_up;
+
+  end_delay = end_stay (time_base, unlocking_down, time_unlock_down) or
+              end_stay (time_base, down_to_up, time_down_to_up) or
+              end_stay (time_base, locking_up, time_lock_up) or
+              end_stay (time_base, unlocking_up, time_unlock_up) or
+              end_stay (time_base, up_to_down, time_up_to_down) or
+              end_stay (time_base, locking_down, time_lock_down);
+
+tel
+
+
+--------------------------------------------------------------------------------
+-- Circuit pressurized - time given
+--------------------------------------------------------------------------------
+
+node circuit_pressurized (time_base, EV : bool)
+returns (circuit_pressurized : bool);
+
+var depressurize : bool;
+
+let
+
+  depressurize = false -> not never(EV) and not EV;
+
+  circuit_pressurized = end_delay (time_base, EV, c_5)
+                        and not end_delay (time_base, depressurize, c_5);
+tel
+
+node end_delay (time_base, started : bool; time : int)
+returns (ended : bool);
+var x : int;
+let
+  x = time -> if started and not pre started
+              then time
+              else if started and time_base and (pre x - 1 >= 0)
+                   then pre x - 1 else pre (x);
+  ended = started and x = 0;
+tel
+
+node never (b : bool) returns (never : bool);
+let
+  never = if b then false else (true -> pre never);
+tel
+
+
+
+-------------------------------------------------------------------------------
+-- Digital part
+-------------------------------------------------------------------------------
+node computing_module (
+  time_base, handle_up, handle_down, gear_extended, gear_retracted,
+  gear_shock_absorber, door_closed, door_open, analogical_switch,
+  circuit_pressurized: bool ;
+) returns (
+  general_EV, close_EV, open_EV, retract_EV, extend_EV, detect_anomaly : bool ;
+) ;
+(*@contract
+
+  import comp_module(
+    time_base, handle_up, handle_down,
+    gear_extended, gear_retracted,
+    door_closed, door_open,
+    analogical_switch,
+    circuit_pressurized
+  ) returns (
+    general_EV, close_EV, open_EV, retract_EV, extend_EV, detect_anomaly
+  ) ;
+*)
+var
+  outgoing, retraction, pressure_problem,
+  door_blocked, gear_blocked, anomaly_detected : bool ;
+let
+
+  outgoing = if (gear_extended and door_closed) then false else (
+    if handle_down then true else (
+      if handle_up then false else (false -> pre outgoing)
+    )
+  ) ;
+
+  retraction = if (gear_retracted and door_closed) then false else (
+    if handle_up then true else (
+      if handle_down then false else (false -> pre retraction)
+    )
+  ) ;
+
+  general_EV = (outgoing or retraction) and analogical_switch ;
+
+  open_EV = general_EV and circuit_pressurized and (
+    (outgoing and gear_retracted and not door_open) or
+    (retraction and gear_extended and not door_open)
+  ) ;
+
+  extend_EV = (
+    general_EV and
+    circuit_pressurized and
+    outgoing and
+    door_open and
+    not gear_extended
+  ) ;
+
+  close_EV = general_EV and circuit_pressurized and (
+    (outgoing and gear_extended and not door_closed) or
+    (retraction and gear_retracted and not door_closed)
+  ) ;
+
+  retract_EV = (
+    general_EV and
+    circuit_pressurized and
+    retraction and
+    door_open and (
+      (gear_shock_absorber and not gear_retracted) or
+      not gear_shock_absorber
+    )
+  ) ;
+
+  pressure_problem = (
+    (end_delay(time_base, general_EV, c_20) and not circuit_pressurized) or
+    (end_delay(time_base, not general_EV, c_100) and circuit_pressurized)
+  ) ;
+
+  door_blocked = (
+    (end_delay (time_base, open_EV, c_5) and door_closed) or
+    (end_delay (time_base, open_EV, c_20) and not door_open) or
+    (end_delay (time_base, close_EV, c_5) and door_open) or
+    (end_delay (time_base, close_EV, c_20) and not door_closed)
+  ) ;
+
+  gear_blocked = (
+    (end_delay (time_base, retract_EV, c_5) and gear_extended) or
+    (end_delay (time_base, retract_EV, c_100) and not gear_retracted) or
+    (end_delay (time_base, extend_EV, c_5) and gear_retracted) or
+    (end_delay (time_base, extend_EV, c_100) and not gear_extended)
+  ) ;
+ 
+  anomaly_detected = door_blocked or gear_blocked or pressure_problem ;
+
+  detect_anomaly = anomaly_detected -> (pre detect_anomaly or anomaly_detected) ;
+
+tel
+
+
+
+
+
+
+node system (
+  time_base, handle_up, handle_down,
+  gear_1_shock_absorber, gear_2_shock_absorber, gear_3_shock_absorber: bool ;
+) returns (
+  general_EV, extend_EV, retract_EV, close_EV, open_EV,
+  door_closed, door_open,
+  gear_extended, gear_retracted,
+  gear_maneuvering, door_maneuvering,
+  pressurized, closed_ana, anomaly : bool
+) ;
+(*@contract
+  import sys_spec (
+    time_base, handle_up, handle_down,
+    gear_1_shock_absorber, gear_2_shock_absorber, gear_3_shock_absorber
+  ) returns (
+    general_EV, extend_EV, retract_EV, close_EV, open_EV,
+    door_closed, door_open,
+    gear_extended, gear_retracted,
+    gear_maneuvering, door_maneuvering,
+    pressurized, closed_ana, anomaly
+  ) ;
+*)
+var
+  gear_1_extended, gear_1_retracted, door_1_closed, door_1_open,
+  gear_2_extended, gear_2_retracted, door_2_closed, door_2_open,
+  gear_3_extended, gear_3_retracted, door_3_closed, door_3_open : bool ;
+let
+
+  closed_ana = true ; -- analogical_switch(time_base, handle_up, handle_down) ;
+
+  pressurized = true ; -- circuit_pressurized(time_base, general_EV) ;
+
+  (gear_1_extended, gear_1_retracted) = cylinder(
+    time_base, false -> pre extend_EV, false -> pre retract_EV, true,
+    1, 1, 1, 1, 1, 1
+  ) ;
+  (door_1_open, door_1_closed) = cylinder(
+    time_base, false -> pre open_EV, false -> pre close_EV, false,
+    1, 1, 1, 1, 1, 1
+  ) ;
+  (gear_2_extended, gear_2_retracted) = cylinder(
+    time_base, false -> pre extend_EV, false -> pre retract_EV, true,
+    1, 1, 1, 1, 1, 1
+  ) ;
+  (door_2_open, door_2_closed) = cylinder(
+    time_base, false -> pre open_EV, false -> pre close_EV, false,
+    1, 1, 1, 1, 1, 1
+  ) ;
+  (gear_3_extended, gear_3_retracted) = cylinder(
+    time_base, false -> pre extend_EV, false -> pre retract_EV, true,
+    1, 1, 1, 1, 1, 1
+  ) ;
+  (door_3_open, door_3_closed) = cylinder(
+    time_base, false -> pre open_EV, false -> pre close_EV, false,
+    1, 1, 1, 1, 1, 1
+  ) ;
+
+  -- (gear_1_extended, gear_1_retracted) = cylinder(
+  --   time_base, false -> pre extend_EV, false -> pre retract_EV, true,
+  --   c_4, c_16, c_4, c_8, c_20, c_8
+  -- ) ;
+  -- (door_1_open, door_1_closed) = cylinder(
+  --   time_base, false -> pre open_EV, false -> pre close_EV, false,
+  --   1, c_12, c_8, c_12, c_12, c_12
+  -- ) ;
+  -- (gear_2_extended, gear_2_retracted) = cylinder(
+  --   time_base, false -> pre extend_EV, false -> pre retract_EV, true,
+  --   c_8, c_24, c_8, c_8, c_20, c_8
+  -- ) ;
+  -- (door_2_open, door_2_closed) = cylinder(
+  --   time_base, false -> pre open_EV, false -> pre close_EV, false,
+  --   1, c_20, c_4, c_12, c_20, c_12
+  -- ) ;
+  -- (gear_3_extended, gear_3_retracted) = cylinder(
+  --   time_base, false -> pre extend_EV, false -> pre retract_EV, true,
+  --   c_12, c_20, c_12, c_12, c_32, c_12
+  -- ) ;
+  -- (door_3_open, door_3_closed) = cylinder(
+  --   time_base, false -> pre open_EV, false -> pre close_EV, false,
+  --   1, c_20, c_4, c_12, c_20, c_12
+  -- ) ;
+
+  -- (gear_1_extended, gear_1_retracted) = cylinder(
+  --   time_base, false -> pre extend_EV, false -> pre retract_EV, true,
+  --   c_4, c_16, c_4, c_8, c_4, c_8
+  -- ) ;
+  -- (door_1_open, door_1_closed) = cylinder(
+  --   time_base, false -> pre open_EV, false -> pre close_EV, false,
+  --   1, c_12, c_8, c_12, c_12, c_12
+  -- ) ;
+  -- (gear_2_extended, gear_2_retracted) = cylinder(
+  --   time_base, false -> pre extend_EV, false -> pre retract_EV, true,
+  --   c_8, c_24, c_8, c_8, c_4, c_8
+  -- ) ;
+  -- (door_2_open, door_2_closed) = cylinder(
+  --   time_base, false -> pre open_EV, false -> pre close_EV, false,
+  --   1, c_4, c_4, c_12, c_4, c_12
+  -- ) ;
+  -- (gear_3_extended, gear_3_retracted) = cylinder(
+  --   time_base, false -> pre extend_EV, false -> pre retract_EV, true,
+  --   c_12, c_4, c_12, c_12, c_8, c_12
+  -- ) ;
+  -- (door_3_open, door_3_closed) = cylinder(
+  --   time_base, false -> pre open_EV, false -> pre close_EV, false,
+  --   1, c_4, c_4, c_12, c_4, c_12
+  -- ) ;
+
+  gear_extended = gear_1_extended and gear_2_extended and gear_3_extended ;
+  gear_retracted = gear_1_retracted and gear_2_retracted and gear_3_retracted ;
+  door_closed = door_1_closed and door_2_closed and door_3_closed ;
+  door_open = door_1_open and door_2_open and door_3_open ;
+
+  (
+    general_EV, close_EV, open_EV, retract_EV, extend_EV, anomaly
+  ) = computing_module(
+    time_base, handle_up, handle_down,
+    gear_extended,
+    gear_retracted,
+    gear_1_shock_absorber or gear_2_shock_absorber or gear_3_shock_absorber,
+    door_closed,
+    door_open,
+    closed_ana,
+    pressurized
+  ) ;
+
+  gear_maneuvering = not (gear_extended or gear_retracted) ;
+  door_maneuvering = not (door_open or door_closed) ;
+
+tel 

@@ -1,0 +1,436 @@
+contract cylinder_spec (
+  time_base, pressure_up, pressure_down, init_up: bool
+) returns (
+  locked_up, locked_down: bool
+) ;
+let
+  assume not (pressure_up and pressure_down) ;
+
+  guarantee not (locked_up and locked_down) ;
+  guarantee (not pressure_up and not pressure_down) => true -> (
+    (locked_up = pre locked_up) and (locked_down = pre locked_down)
+  ) ;
+tel
+
+contract comp_module (
+  time_base, handle_up, handle_down,
+  gear_extended, gear_retracted,
+  door_closed, door_open,
+  analogical_switch,
+  circuit_pressurized: bool ;
+) returns (
+  general_EV, close_EV, open_EV, retract_EV, extend_EV, anomaly: bool ;
+) ;
+let
+  var r41 = not (close_EV and open_EV) ;
+  var r42 = not (retract_EV and extend_EV) ;
+
+  var r50 = (
+    open_EV or close_EV or extend_EV or retract_EV
+  ) => general_EV ;
+
+  var r61 = (
+    end_delay(time_base, open_EV, c_5) and door_closed
+  ) => anomaly ;
+  var r62 = (
+    end_delay(time_base, close_EV, c_5) and door_open
+  ) => anomaly ;
+  var r63 = (
+    end_delay(time_base, retract_EV, c_5) and gear_extended
+  ) => anomaly ;
+  var r64 = (
+    end_delay(time_base, extend_EV, c_5) and gear_retracted
+  ) => anomaly ;
+
+  var r71 = (
+    end_delay(time_base, open_EV, c_20) and not door_open
+  ) => anomaly ;
+  var r72 = (
+    end_delay(time_base, close_EV, c_20) and not door_closed
+  ) => anomaly ;
+  var r73 = (
+    end_delay(time_base, retract_EV, c_100) and not gear_retracted
+  ) => anomaly ;
+  var r74 = (
+    end_delay(time_base, extend_EV, c_100) and not gear_extended
+  ) => anomaly ;
+
+  var retract = count_when(
+    analogical_switch and
+    circuit_pressurized and
+    has_been_true_reset(handle_up, handle_down),
+    true
+  ) ;
+  var extend = count_when(
+    analogical_switch and
+    circuit_pressurized and
+    has_been_true_reset(handle_down, handle_up),
+    true
+  ) ;
+
+  assume (false -> pre handle_up) => not handle_down ;
+  assume (
+    true -> pre has_been_true_reset(handle_up, handle_down)
+  ) => not handle_up ;
+  assume (false -> pre handle_down) => not handle_up ;
+  assume (
+    true -> pre has_been_true_reset(handle_down, handle_up)
+  ) => not handle_down ;
+  assume (false ->
+    pre door_open and not pre close_EV
+  ) => door_open ;
+  assume (false ->
+    pre door_closed and not pre open_EV
+  ) => door_closed ;
+  assume (false ->
+    pre gear_retracted and not pre extend_EV
+  ) => gear_retracted ;
+  assume (false ->
+    pre gear_extended and not pre retract_EV
+  ) => gear_extended ;
+
+  assume not (handle_up and handle_down) ;
+  assume not (door_closed and door_open) ;
+  assume not (gear_extended and gear_retracted) ;
+  assume door_closed => (gear_retracted or gear_extended) ;
+
+  guarantee (not door_open) => not (extend_EV or retract_EV) ;
+  guarantee extend_EV => (
+    gear_extended or
+    not (open_EV or close_EV)
+  ) ;
+  guarantee retract_EV => (
+    gear_retracted or
+    not (open_EV or close_EV)
+  ) ;
+
+  guarantee true -> (pre anomaly => anomaly) ;
+
+  mode waiting (
+    require retract = 0 ;
+    require extend = 0 ;
+    ensure not close_EV ;
+    ensure not open_EV ;
+    ensure not retract_EV ;
+    ensure not extend_EV ;
+  ) ;
+
+
+  mode R11_retracted_closed (
+    require retract > 0 ;
+    require gear_retracted ;
+    require door_closed ;
+    ensure not general_EV ;
+  ) ;
+
+  mode R11_closing (
+    require retract > 0 ;
+    require gear_retracted ;
+    require not door_closed ;
+    ensure close_EV ;
+    ensure true -> not pre ::R11_retracted_closed ;
+  ) ;
+
+  mode R11_retracting (
+    require retract > 0 ;
+    require not gear_retracted ;
+    require door_open ;
+    ensure retract_EV ;
+    ensure true -> not pre ::R11_retracted_closed ;
+    ensure true -> not pre ::R11_closing ;
+  ) ;
+
+  mode R11_opening (
+    require retract > 0 ;
+    require gear_extended ;
+    require not door_open ;
+    ensure open_EV ;
+    ensure true -> not pre ::R11_retracted_closed ;
+    ensure true -> not pre ::R11_closing ;
+    ensure true -> not pre ::R11_retracting ;
+  ) ;
+
+  guarantee ::R11_closing => (
+    true -> not pre ::R11_opening
+  ) ;
+  guarantee ::R11_retracted_closed => (
+    true -> not pre (
+      ::R11_opening or ::R11_retracting
+    )
+  ) ;
+
+
+
+  mode R12_extended_closed (
+    require extend > 0 ;
+    require gear_extended ;
+    require door_closed ;
+    ensure not general_EV ;
+  ) ;
+
+  mode R12_closing (
+    require extend > 0 ;
+    require gear_extended ;
+    require not door_closed ;
+    ensure close_EV ;
+    ensure true -> not ::R12_extended_closed ;
+  ) ;
+
+  mode R12_extending (
+    require extend > 0 ;
+    require not gear_extended ;
+    require door_open ;
+    ensure extend_EV ;
+    ensure true -> not ::R12_extended_closed ;
+    ensure true -> not ::R12_closing ;
+  ) ;
+
+  mode R12_opening (
+    require extend > 0 ;
+    require gear_retracted ;
+    require not door_open ;
+    ensure open_EV ;
+    ensure true -> not ::R12_extended_closed ;
+    ensure true -> not ::R12_closing ;
+    ensure true -> not ::R12_extending ;
+  ) ;
+
+  guarantee ::R12_closing => (
+    true -> not pre ::R12_opening
+  ) ;
+  guarantee ::R12_extended_closed => (
+    true -> not pre (
+      ::R12_opening or ::R12_extending
+    )
+  ) ;
+
+
+  mode R21_down (
+    require extend > 0 ;
+    ensure not retract_EV ;
+  ) ;
+  mode R22_up (
+    require retract > 0 ;
+    ensure not extend_EV ;
+  ) ;
+
+
+  mode R31_not_open (
+    require not door_open ;
+    ensure not extend_EV ;
+    ensure not retract_EV ;
+  ) ;
+  mode R32_maneuvering (
+    require not gear_extended ;
+    require not gear_retracted ;
+    ensure not open_EV ;
+    ensure not close_EV ;
+  ) ;
+
+
+  --| Two following guarantees do not hold in original model, because the
+  --| `pre outgoing` (`pre retraction`) in the definition of `outgoing`
+  --| (`retraction`) is unguarded. This allows a falsification in the initial
+  --| state.
+  guarantee r41 ;
+  guarantee r42 ;
+
+  guarantee r50 ;
+
+  guarantee r61 ;
+  guarantee r62 ;
+  guarantee r63 ;
+  guarantee r64 ;
+
+  guarantee r71 ;
+  guarantee r72 ;
+  guarantee r73 ;
+  guarantee r74 ;
+tel
+
+
+
+
+
+
+contract sys_spec (
+  time_base, handle_up, handle_down,
+  gear_1_shock_absorber, gear_2_shock_absorber, gear_3_shock_absorber: bool ;
+) returns (
+  general_EV, extend_EV, retract_EV, close_EV, open_EV,
+  door_closed, door_open,
+  gear_extended, gear_retracted,
+  gear_maneuvering, door_maneuvering,
+  pressurized, switch, anomaly: bool ;
+) ;
+let
+  var retract = count_when(
+    has_been_true_reset(handle_up, handle_down), true
+  ) ;
+  var retracting = count_when(
+    switch and pressurized and retract > 0, true
+  ) ;
+  var extend = count_when(
+    has_been_true_reset(handle_down, handle_up), true
+  ) ;
+  var extending = count_when(
+    switch and pressurized and extend > 0, true
+  ) ;
+
+  var r31 = (extend_EV or retract_EV) => door_open ;
+  var r32 = (open_EV or close_EV) => (gear_retracted or gear_extended) ;
+
+  var r41 = not (close_EV and open_EV) ;
+  var r42 = not (retract_EV and extend_EV) ;
+
+  var r50 = (
+    open_EV or close_EV or extend_EV or retract_EV
+  ) => general_EV ;
+
+  var r61 = (
+    end_delay(time_base, open_EV, c_5) and door_closed
+  ) => anomaly ;
+  var r62 = (
+    end_delay(time_base, close_EV, c_5) and door_open
+  ) => anomaly ;
+  var r63 = (
+    end_delay(time_base, retract_EV, c_5) and gear_extended
+  ) => anomaly ;
+  var r64 = (
+    end_delay(time_base, extend_EV, c_5) and gear_retracted
+  ) => anomaly ;
+
+  var r71 = (
+    end_delay(time_base, open_EV, c_20) and not door_open
+  ) => anomaly ;
+  var r72 = (
+    end_delay(time_base, close_EV, c_20) and not door_closed
+  ) => anomaly ;
+  var r73 = (
+    end_delay(time_base, retract_EV, c_100) and not gear_retracted
+  ) => anomaly ;
+  var r74 = (
+    end_delay(time_base, extend_EV, c_100) and not gear_extended
+  ) => anomaly ;
+
+  assume (false -> pre handle_up) => not handle_down ;
+  assume (false -> pre retract > 0) => not handle_up ;
+  assume (false -> pre handle_down) => not handle_up ;
+  assume (false -> pre extend > 0) => not handle_down ;
+
+  assume not (handle_up and handle_down) ;
+
+  -----x
+  ----/!\
+  ---/!!!\ VERY STRONG ASSUMPTIONS / GUARANTEES HERE.
+  --/!!!!!\
+  assume time_base ;
+  -- assume not handle_down ;
+  assume (
+    true -> pre (retract < scenario_time and retract > 0)
+  ) => not handle_down ;
+  assume (
+    true -> pre (extend < scenario_time and extend > 0)
+  ) => not handle_up ;
+  -- assume not gear_1_shock_absorber ;
+  -- assume not gear_2_shock_absorber ;
+  -- assume not gear_3_shock_absorber ;
+  guarantee handle_down => (
+    gear_retracted or gear_extended or anomaly
+  ) ;
+  guarantee handle_up => (
+    gear_retracted or gear_extended or anomaly
+  ) ;
+
+  guarantee not (door_closed and door_open) ;
+  guarantee not (gear_extended and gear_retracted) ;
+  guarantee door_closed => (gear_retracted or gear_extended) ;
+  guarantee (not gear_retracted and not gear_extended) => door_open ;
+
+  guarantee true -> (pre anomaly => anomaly) ;
+
+  guarantee not ( (retract > 0) and (extend > 0) ) ;
+
+  mode open_stable (
+    require false -> pre door_open and not pre close_EV ;
+    ensure door_open ;
+  ) ;
+  mode closed_stable (
+    require false -> pre door_closed and not pre open_EV ;
+    ensure  door_closed ;
+  ) ;
+  mode retracted_stable (
+    require false -> pre gear_retracted and not pre extend_EV ;
+    ensure gear_retracted ;
+  ) ;
+  mode extended_stable (
+    require false -> pre gear_extended and not pre retract_EV ;
+    ensure gear_extended ;
+  ) ;
+
+  mode waiting (
+    require retract = 0 ;
+    require extend = 0 ;
+    ensure not close_EV ;
+    ensure not open_EV ;
+    ensure not retract_EV ;
+    ensure not extend_EV ;
+  ) ;
+
+  mode R11 (
+    require retract >= scenario_time ; -- c_200 ;
+    require false -> not pre anomaly ;
+    ensure gear_retracted or anomaly ;
+    ensure door_closed or anomaly ;
+  ) ;
+
+  mode R12 (
+    require extend >= scenario_time ; -- c_200 ;
+    require false -> not pre anomaly ;
+    ensure gear_extended or anomaly ;
+    ensure door_closed or anomaly ;
+  ) ;
+
+  mode R11_transient (
+    require retract > 0 ;
+    ensure (gear_retracted and door_closed) => not general_EV ;
+    ensure (gear_retracted and not door_closed) => close_EV ;
+    ensure (not gear_retracted and door_open) => retract_EV ;
+    ensure (gear_extended and door_closed) => open_EV ;
+  ) ;
+
+  mode R12_transient (
+    require extend > 0 ;
+    ensure (gear_extended and door_closed) => not general_EV ;
+    ensure (gear_extended and not door_closed) => close_EV ;
+    ensure (not gear_extended and door_open) => extend_EV ;
+    ensure (gear_retracted and door_closed) => open_EV ;
+  ) ;
+
+  mode R21_down (
+    require extend > 0 ;
+    ensure not retract_EV ;
+  ) ;
+  mode R22_up (
+    require retract > 0 ;
+    ensure not extend_EV ;
+  ) ;
+
+  guarantee r31 ;
+  guarantee r32 ;
+
+  guarantee r41 ;
+  guarantee r42 ;
+
+  guarantee r50 ;
+
+  guarantee r61 ;
+  guarantee r62 ;
+  guarantee r63 ;
+  guarantee r64 ;
+
+  guarantee r71 ;
+  guarantee r72 ;
+  guarantee r73 ;
+  guarantee r74 ;
+tel

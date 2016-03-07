@@ -7,6 +7,7 @@ import lib, iolib, options, flags
 import test_case, test_context
 import context as ctxt
 import binary as bina
+import os
 import testexec, testset, binary
 import execution, breakdown
 
@@ -139,7 +140,13 @@ if __name__ == "__main__":
   test_contexts = get_contexts(files)
   # job_count = len(test_executions)
 
+  original_dir = os.getcwd()
+
   for test_context in test_contexts:
+
+    log( "changing to dir {}".format(ctxt.wdir(test_context)) )
+
+    os.chdir( ctxt.wdir(test_context) )
 
     for bin4ry in ctxt.bins(test_context):
       log( "Running tests for system {}".format(
@@ -210,6 +217,8 @@ if __name__ == "__main__":
                 failures, width=width)
               )
           new_line()
+
+    os.chdir( original_dir )
 
   log("Done.")
   new_line(1)

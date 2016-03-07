@@ -7,9 +7,10 @@ run:
 	python src $(args)
 
 test:
-	nosetests-2.7 -v src/tests/*.py
+	./scripts/tests.sh
 
 clean:
 	rm -rf dist
 	rm -f src/tests/*.pyc src/*.pyc MANIFEST
 
+.PHONY: build run test clean
