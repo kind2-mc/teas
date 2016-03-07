@@ -140,7 +140,7 @@ def run(t):
       # Creating binary input values.
       values = v.seq(test_case)[k]
       values = reduce(
-        lambda s,v: s + " " + v,
+        lambda s,v: s + ", " + v,
         values[1:],
         values[0]
       )
@@ -152,11 +152,14 @@ def run(t):
       # Retrieving binary output.
       output = bin_proc.stdout.readline().strip()
       log( "      bin out: {}".format(output), max_log )
-      out_values = output.split(" ")
+      # out_values = map(
+      #   string.strip
+      #   output.split(",")
+      # )
       # write_out_seq( out_values, file_bin )
 
       # Creating oracle input values.
-      values = values + " " + output
+      values = values + ", " + output
 
       # Feeding oracle.
       log( "      ora in:  {}".format(values), max_log )
@@ -165,7 +168,11 @@ def run(t):
       # Retrieving oracle output.
       output = ora_proc.stdout.readline().strip()
       log( "      ora out: {}".format(output), max_log )
-      out_values = output.split(" ")
+      out_values = map(
+        lambda s: s.strip(),
+        output.split(",")
+      )
+      # out_values = output.split(",")
       # write_out_seq( out_values, file_ora )
 
       # Checking the oracle output.

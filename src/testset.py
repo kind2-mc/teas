@@ -6,6 +6,7 @@ A test set contains
 """
 
 import xml.etree.ElementTree as xet
+import os
 
 import testcase
 import testexec
@@ -35,7 +36,7 @@ def mk(system, name, tests):
   """Creates a test set."""
   return { "system": system, "name": name, "tests": tests }
 
-def of_xml(tree):
+def of_xml(tree, path):
   """Creates a test set from an xml tree."""
   if "system" not in tree.attrib.keys(): raise Exception(
     "illegal test set file: data tag misses a system attribute"
@@ -47,7 +48,7 @@ def of_xml(tree):
   system = tree.attrib["system"]
   name = tree.attrib["name"]
   testcases = map(
-    testcase.of_xml,
+    lambda tc: testcase.of_xml(tc, path),
     tree.findall("testcase")
   )
   # Done.
@@ -57,7 +58,7 @@ def of_file(path):
   """Creates a test set from a file."""
   tree = xet.parse(path)
   root = tree.getroot()
-  return of_xml(root)
+  return of_xml(root, os.path.abspath(os.path.join(path, os.pardir)))
 
 # def to_testexecs(t, binary, oracle, log_root):
 #   """Returns a list of test executions, one for each test case of the test

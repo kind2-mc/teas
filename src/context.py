@@ -30,15 +30,15 @@ def bins(t):
 
 def pprint(prefix, t, lvl=2):
   """Prints a context."""
-  log( "{}{}".format(prefix, system(t)), lvl )
-  log( "{}| oracle:".format(prefix), lvl )
-  oracl3.pprint("{}|  ".format(prefix), oracle(t), lvl)
-  log( "{}| test sets:".format(prefix), lvl )
+  log( "{}system \"{}\"".format(prefix, system(t)), lvl )
+  log( "{}  oracle:".format(prefix), lvl )
+  oracl3.pprint("{}    ".format(prefix), oracle(t), lvl)
+  log( "{}  test sets:".format(prefix), lvl )
   for test in tests(t):
-    log( "{}|  {}".format(prefix, test), lvl )
-  log( "{}| binaries:".format(prefix), lvl )
+    log( "{}    {}".format(prefix, test), lvl )
+  log( "{}  binaries:".format(prefix), lvl )
   for binar in bins(t):
-    log( "{}|  {}".format(prefix, binar), lvl )
+    b.pprint("{}    ".format(prefix), binar, lvl )
 
 def mk(system, oracle, tests, bins):
   """Creates a context."""

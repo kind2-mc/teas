@@ -36,6 +36,9 @@ def of_xml(tree):
   """Creates a binary from an xml tree."""
   name = tree.attrib["name"]
   cmd = tree.text
+  setup = lib.run_setup_if_any(
+    tree, "binary \"{}\"".format(name)
+  )
   return mk(name, cmd)
 
 def dummy():

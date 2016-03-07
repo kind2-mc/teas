@@ -98,16 +98,15 @@ def get_contexts(files):
   test_contexts = []
 
   for fil3 in files:
-    log("Parsing test context from \"{}\".".format(fil3))
+    log("Parsing test context from \"{}\"".format(fil3))
     context = ctxt.of_file(fil3)
-    log("Success:")
+    log("Done parsing \"{}\":".format(fil3))
     ctxt.pprint("  ", context)
     new_line()
     # Don't load the testcase itself, we do that right before running the
     # test itself.
     test_contexts.append(context)
 
-  new_line()
   return test_contexts
 
 def load_testcase(test_execution):
@@ -146,10 +145,11 @@ if __name__ == "__main__":
       log( "Running tests for system {}".format(
           ctxt.system(test_context)
       ) )
-      log( "  {} test sets".format(len(ctxt.tests(test_context))) )
+      new_line()
+      log( "  {} test set(s)".format(len(ctxt.tests(test_context))) )
       log( "  on binary" )
       binary.pprint("    ", bin4ry)
-      new_line(max_log)
+      new_line()
 
       oracle = ctxt.oracle(test_context)
 
@@ -158,35 +158,42 @@ if __name__ == "__main__":
         return testexec.run(test_exec)
 
       for test_set in ctxt.tests(test_context):
-        log( "Loading test set {}".format(test_set) )
+        log( "  Loading test set {}".format(test_set) )
         ts = testset.of_file(test_set)
-        log( "Done, setting up test set \"{}\".".format(testset.name(ts)) )
-        new_line(max_log)
+        log("  Done.")
+        new_line()
 
         job_count = len( testset.tests(ts) )
 
         if flags.run_tests():
 
           if flags.sequential_run():
-            log("  Sequential run, {} jobs.".format(job_count))
+            log(
+              "  Sequential run on \"{}\", {} jobs.".format(
+                test_set, job_count
+              )
+            )
             res_list = map(run_test, testset.tests(ts))
             total = len(res_list)
             successes = len( [ok for ok in res_list if ok] )
             failures = total - successes
             width = len(str(total))
-            log("  Done on {} tests:".format(total))
-            log("    > \033[32m{0:>{width}} test passed\033[0m".format(
+            log("  Done on {} test(s):".format(total))
+            log("  > \033[32m{0:>{width}} test(s) passed\033[0m".format(
               successes, width=width)
             )
             if failures > 0:
-              log("    > \033[31m{0:>{width}} test failed\033[0m".format(
+              log("  > \033[31m{0:>{width}} test(s) failed\033[0m".format(
                 failures, width=width)
               )
 
           else:
-            log("  Running {} jobs in parallel with {} workers.".format(
-              job_count, flags.max_proc()
-            ))
+            new_line()
+            log(
+              "  Running {} jobs in parallel with {} workers on \"{}\"".format(
+                job_count, flags.max_proc(), test_set
+              )
+            )
             new_line(max_log)
             p00l = multiprocessing.Pool(flags.max_proc())
             res_list = p00l.map(run_test, testset.tests(ts))
@@ -195,17 +202,14 @@ if __name__ == "__main__":
             failures = total - successes
             width = len(str(total))
             log("  Done on {} tests:".format(total))
-            log("    > \033[32m{0:>{width}} test passed\033[0m".format(
+            log("  > \033[32m{0:>{width}} test(s) passed\033[0m".format(
               successes, width=width)
             )
             if failures > 0:
-              log("    > \033[31m{0:>{width}} test failed\033[0m".format(
+              log("  > \033[31m{0:>{width}} test(s) failed\033[0m".format(
                 failures, width=width)
               )
           new_line()
-          new_line()
 
-
-  new_line()
   log("Done.")
   new_line(1)

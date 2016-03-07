@@ -1,6 +1,7 @@
 """ Basic helper things. """
 
-import os, string, shlex
+import os, string, shlex, subprocess
+from stdout import log, error
 
 def bool_of_string(s):
     """ Converts a string to a bool, raises a ``ValueError`` in case of
@@ -43,6 +44,39 @@ def oracle_log_file_of_log_path(log_path):
     execution. """
     if log_path.endswith(".csv"): clean_path = log_path[:-4]
     else: clean_path = log_path
-    return "{}_{}.csv".format(
-        clean_path, "oracles"
+    return "{}_{}.csv".format(clean_path, "oracles")
+
+def run_setup_if_any(tree, desc):
+  """ Tries to retrieve the ``"setup"`` attribute of an XML tree. If any's
+  found, interprets the attribute as a command and attempts to run it. """
+  try:
+    setup = tree.attrib["setup"]
+    log( "  Running setup for {}".format(desc) )
+    log( "  > {}".format(setup) )
+    setup = shlex.split(setup)
+    proc = subprocess.Popen(
+      setup, stdout=subprocess.PIPE, stderr=subprocess.PIPE
     )
+    output = proc.communicate()
+    stdout = output[0]
+    stderr = output[1]
+    if proc.returncode != 0:
+      error(
+        "  Failed to run setup for {} ({})".format(desc, proc.returncode)
+      )
+      if stdout != "":
+        for line in stdout.split(os.linesep):
+          error( "  [stdout] {}".format(line) )
+      if stderr != "":
+        for line in stderr.split(os.linesep):
+          error( "  [stderr] {}".format(line) )
+    else:
+      if stdout != "":
+        for line in stdout.split(os.linesep):
+          if line != "":
+            log( "  [stdout] {}".format(line) )
+      if stderr != "":
+        for line in stderr.split(os.linesep):
+          if line != "":
+            log( "  [stderr] {}".format(line) )
+  except KeyError: ()
