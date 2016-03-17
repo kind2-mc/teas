@@ -10,6 +10,7 @@ import xml.etree.ElementTree as xet
 import binary as b
 import testset as ts
 import oracle as oracl3
+import os
 from stdout import log, error, new_line
 
 def system(t):
@@ -28,30 +29,38 @@ def bins(t):
   """The binaries of a context."""
   return t["bins"]
 
+def wdir(t):
+  """The directory containing the glue xml file."""
+  return t["wdir"]
+
 def pprint(prefix, t, lvl=2):
   """Prints a context."""
-  log( "{}{}".format(prefix, system(t)), lvl )
-  log( "{}| oracle:".format(prefix), lvl )
-  oracl3.pprint("{}|  ".format(prefix), oracle(t), lvl)
-  log( "{}| test sets:".format(prefix), lvl )
+  log( "{}system \"{}\"".format(prefix, system(t)), lvl )
+  log( "{}  oracle:".format(prefix), lvl )
+  oracl3.pprint("{}    ".format(prefix), oracle(t), lvl)
+  log( "{}  test sets:".format(prefix), lvl )
   for test in tests(t):
-    log( "{}|  {}".format(prefix, test), lvl )
-  log( "{}| binaries:".format(prefix), lvl )
+    log( "{}    {}".format(prefix, test), lvl )
+  log( "{}  binaries:".format(prefix), lvl )
   for binar in bins(t):
-    log( "{}|  {}".format(prefix, binar), lvl )
+    b.pprint("{}    ".format(prefix), binar, lvl )
 
-def mk(system, oracle, tests, bins):
+def mk(wdir, system, oracle, tests, bins):
   """Creates a context."""
   return {
+    "wdir": wdir,
     "system": system, "oracle": oracle, "tests": tests, "bins": bins
   }
 
 
-def of_xml(tree):
+def of_xml(wdir, tree):
   """Creates a context from an xml tree."""
   if "system" not in tree.attrib.keys(): raise Exception(
     "illegal test file: data tag misses a system attribute"
   )
+  original_dir = os.getcwd()
+  log( "changing to dir {}".format(wdir) )
+  os.chdir( wdir )
   system = tree.attrib["system"]
   oracle = oracl3.of_xml(tree)
   test_sets = map(
@@ -62,13 +71,16 @@ def of_xml(tree):
     (lambda tree: b.of_xml(tree)),
     tree.findall("binary")
   )
-  return mk(system, oracle, test_sets, bins)
+  os.chdir( original_dir )
+  return mk(wdir, system, oracle, test_sets, bins)
 
 def of_file(path):
   """Creates a context from an xml file."""
   xml_tree = xet.parse(path)
   root = xml_tree.getroot()
-  return of_xml(root)
+  wdir = os.path.split(path)[0]
+  log( "dir: {}".format(dir) )
+  return of_xml(wdir, root)
 
 def testset_num(t, i):
   """Loads and returns the ``i``th test set in the context."""

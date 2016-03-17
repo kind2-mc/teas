@@ -37,7 +37,7 @@ def mk(path, name, form4t, desc):
   """Creates a test case."""
   return { "path": path, "name": name, "format": form4t, "desc": desc }
 
-def of_xml(tree):
+def of_xml(tree, path):
   """Creates a test case from an xml tree."""
   if "path" not in tree.attrib.keys(): raise Exception(
     "illegal test set file: data tag missing a path attribute"
@@ -49,7 +49,7 @@ def of_xml(tree):
     "illegal test set file: data tag missing a format attribute"
   )
   # Extracting info.
-  path = tree.attrib["path"]
+  path = "{}/{}".format(path, tree.attrib["path"])
   name = tree.attrib["name"]
   form4t = tree.attrib["format"]
   desc = map( lambda s: s.strip(), tree.text.split("\n") )

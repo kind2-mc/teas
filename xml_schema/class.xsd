@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- XML schema for the TestEAS test execution engine. Top file. !-->
+
+<xs:schema
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  elementFormDefault="qualified"
+  xmlns:vc="http://www.w3.org/2007/XMLSchema-versioning"
+  vc:minVersion="1.0"
+>
+
+<!-- Mode activation. -->
+
+<xs:complexType name="modeActivation">
+  <xs:simpleContent>
+    <xs:extension base="xs:string">
+      <xs:attribute name="step" type="xs:integer"/>
+    </xs:extension>
+  </xs:simpleContent>
+</xs:complexType>
+
+<!-- Test case. -->
+
+<xs:complexType name="testCase">
+  <xs:sequence>
+    <xs:element name="activation" type="modeActivation"
+      minOccurs="1" maxOccurs="unbounded"/>
+  </xs:sequence>
+  <xs:attribute name="path" type="xs:string" use="required"/>
+  <xs:attribute name="name" type="xs:string" use="required"/>
+  <xs:attribute name="format" type="xs:string" use="required"/>
+</xs:complexType>
+
+<!-- Root node. -->
+
+<xs:element name="data">
+  <xs:complexType>
+    <xs:sequence>
+      <xs:element name="testcase" type="testCase"
+        minOccurs="1" maxOccurs="unbounded"/>
+    </xs:sequence>
+    <xs:attribute name="system" type="xs:string" use="required"/>
+    <xs:attribute name="name" type="xs:string" use="required"/>
+  </xs:complexType>
+</xs:element>
+
+</xs:schema>

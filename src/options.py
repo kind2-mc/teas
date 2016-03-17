@@ -206,6 +206,41 @@ _add_option(
     _add_binary_action
 )
 
+# Adding oracle option.
+def _add_oracle_action(tail):
+    if len(tail) < 3: raise ValueError(
+        "expected three arguments but found {}".format(len(tail))
+    )
+    fst = tail[0]
+    snd = tail[1]
+    thd = tail[2]
+    triple = fst, snd, thd
+    if fst.startswith("-"): raise ValueError(
+        "expected oracle name but found \"{}\"".format(fst)
+    )
+    if snd.startswith("-"): raise ValueError(
+        "expected binary command but found \"{}\"".format(snd)
+    )
+    if thd.startswith("-"): raise ValueError(
+        "expected test context file but found \"{}\"".format(thd)
+    )
+    if not os.path.isfile(thd): raise ValueError(
+        "test context file \"{}\" does not exist".format(thd)
+    )
+    flags.add_binary_to_add(triple)
+    return tail[3:]
+_add_option(
+    ["--add_bin"],
+    [
+        "> of n cmd ctxt (default {})".format(
+            flags.binaries_to_add_default()
+        ),
+        "will add the binary with name \"n\", command \"cmd\" to the test",
+        "context in file \"ctxt\""
+    ],
+    _add_binary_action
+)
+
 # Test case type-check option.
 def _type_check_action(tail):
     flags.set_type_check_test_cases( lib.bool_of_string(tail[0]) )

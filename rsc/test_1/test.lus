@@ -1,0 +1,29 @@
+node test (in: int) returns (cpt: int ; ok: bool) ;
+let
+  cpt = in -> in + pre cpt ;
+  ok = cpt >= 0 ;
+tel
+
+
+node top (in, dont_care: int) returns (cpt: int ; ok: bool) ;
+(*@contract
+  assume -10 <= in ;
+  assume        in <= 10 ;
+  guarantee cpt = (in -> in + pre cpt) ;
+  mode zero (
+    require in = 0 ;
+    ensure cpt = 0 -> cpt = pre cpt ;
+  ) ;
+  mode pos (
+    require in < 0 ;
+    ensure cpt < 0 -> cpt < pre cpt ;
+  ) ;
+  mode neg (
+    require in > 0 ;
+    ensure cpt > 0 -> cpt > pre cpt ;
+  ) ;
+*)
+let
+  assert in >= 0 ;
+  (cpt, ok) = test(in) ;
+tel

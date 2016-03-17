@@ -1,5 +1,0 @@
-TS,bool,false,false,false,false,true,false,true,true,true,false,false,true,true,false,false,true
-LS_CLK,bool,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false
-RS_CLK,bool,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false
-LR_CLK,bool,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false
-RL_CLK,bool,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false

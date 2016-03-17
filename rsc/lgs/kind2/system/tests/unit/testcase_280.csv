@@ -1,0 +1,6 @@
+time_base,bool,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true
+handle_up,bool,false,false,true,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false
+handle_down,bool,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,true,false,false,false,false,false
+gear_1_shock_absorber,bool,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false
+gear_2_shock_absorber,bool,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false
+gear_3_shock_absorber,bool,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false
